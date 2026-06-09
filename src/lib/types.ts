@@ -8,6 +8,7 @@ export interface Product {
   videoUrl?: string;
   category: Category;
   active: boolean;
+  displayOrder: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,6 +83,7 @@ export interface CheckoutFormData {
   customerName: string;
   customerPhone: string;
   customerAddress?: string;
+  customerZipCode?: string;
   customerEmail?: string;
   notes?: string;
 }
@@ -90,6 +92,7 @@ export interface CreateOrderPayload {
   customerName: string;
   customerPhone: string;
   customerAddress?: string;
+  customerZipCode?: string;
   customerEmail?: string;
   items: { productId: string; quantity: number }[];
 }
@@ -141,4 +144,34 @@ export interface UpdateCategoryDto {
   name?: string;
   description?: string;
   active?: boolean;
+}
+
+export type AnalyticsPeriod = 'week' | 'month' | 'year';
+
+export interface OverviewResult {
+  totalVisits: number;
+  uniqueVisitors: number;
+  uniqueSessions: number;
+  whatsappClicks: number;
+}
+
+export interface DailyVisit {
+  date: string;
+  visits: number;
+  uniqueVisitors: number;
+}
+
+export interface PageVisit {
+  path: string;
+  visits: number;
+}
+
+export interface DeviceBreakdown {
+  device: string;
+  count: number;
+}
+
+export interface EventSummary {
+  event: string;
+  count: number;
 }

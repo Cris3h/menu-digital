@@ -1,81 +1,154 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
+import { Logo } from '@/components/ui/Logo';
+import { Icon } from '@/components/ui/Icons';
+import { cn, getWhatsAppUrl } from '@/lib/utils';
+import {
+  WHATSAPP_NUMBER,
+  WHATSAPP_MESSAGE,
+  DELIVERY_ZONE,
+  BUSINESS_HOURS,
+} from '@/lib/constants';
 
-function NavLink({
-  href,
-  children,
-  active,
-}: {
-  href: string;
-  children: React.ReactNode;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`text-sm font-medium transition-colors duration-200 pb-1 border-b-2 -mb-px ${
-        active
-          ? 'text-gold-100 border-gold-300'
-          : 'text-white/70 hover:text-white border-transparent'
-      }`}
-    >
-      {children}
-    </Link>
-  );
-}
+const NAV = [
+  { label: 'Inicio', href: '/' },
+  { label: 'Catálogo', href: '/menu' },
+  { label: 'Combos', href: '/combos' },
+  { label: 'Nosotros', href: '/nosotros' },
+  { label: 'Contacto', href: '/contacto' },
+];
+
+/** Sello de marca: la cuchilla dentro del anillo dorado (PNG transparente local). */
+const LOGO_BADGE = '/logo-mark.png';
 
 export function Header() {
   const pathname = usePathname();
-  const items = useCartStore((state) => state.items);
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const itemCount = useCartStore((s) =>
+    s.items.reduce((sum, i) => sum + i.quantity, 0)
+  );
+  const whatsappUrl = getWhatsAppUrl(WHATSAPP_NUMBER, WHATSAPP_MESSAGE);
+
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   return (
-    <motion.header
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="sticky top-0 z-50 w-full border-b border-gold-300/20 bg-dark-900/90 backdrop-blur-md"
-    >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="text-xl font-bold tracking-tight text-gold-200 transition-colors duration-200 hover:text-gold-100 focus:outline-none focus:ring-2 focus:ring-gold-300/50 focus:ring-offset-2 focus:ring-offset-dark-900 rounded"
-        >
-          miinuta
+    <header className="sticky top-0 z-50 bg-bg/95 backdrop-blur-md">
+      {/* Barra de aviso */}
+      <div className="announce">
+        <span>
+          Delivery en {DELIVERY_ZONE} · {BUSINESS_HOURS}
+        </span>
+        <Icon.truck style={{ width: 16, height: 16 }} />
+      </div>
+
+      {/* ---------- Desktop ---------- */}
+      <div className="mx-auto hidden max-w-[1440px] items-center justify-between px-8 py-5 lg:flex">
+        <Link href="/" aria-label="Inicio" className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={LOGO_BADGE}
+            alt="MIINUTA. CARNES"
+            className="h-20 w-20 object-contain"
+          />
+          <Logo />
         </Link>
-
-        <nav className="flex items-center gap-8" aria-label="Navegación principal">
-          <NavLink href="/" active={pathname === '/'}>
-            Inicio
-          </NavLink>
-          <NavLink href="/menu" active={pathname === '/menu'}>
-            Menú
-          </NavLink>
-
-          <Link
-            href="/cart"
-            className="relative rounded p-2 text-white/70 transition-colors duration-200 hover:text-gold-200 focus:outline-none focus:ring-2 focus:ring-gold-300/50 focus:ring-offset-2 focus:ring-offset-dark-900"
-            aria-label={`Carrito con ${itemCount} ${itemCount === 1 ? 'producto' : 'productos'}`}
-          >
-            <ShoppingCart className="h-6 w-6" />
+        <nav className="flex items-center gap-[34px]" aria-label="Navegación principal">
+          {NAV.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              className={cn('nav-link', isActive(n.href) && 'active')}
+            >
+              {n.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link href="/mis-pedidos" className="icon-btn" title="Mis pedidos">
+            <Icon.clipboard />
+          </Link>
+          <Link href="/cart" className="icon-btn" aria-label={`Carrito (${itemCount})`}>
+            <Icon.cart />
             {itemCount > 0 && (
-              <motion.span
-                key={itemCount}
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gold-300 text-xs font-bold text-dark-900"
-              >
-                {itemCount > 99 ? '99+' : itemCount}
-              </motion.span>
+              <span className="badge-count tnum">{itemCount > 99 ? '99+' : itemCount}</span>
             )}
           </Link>
-        </nav>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-gold ml-1.5"
+            style={{ height: 42, padding: '0 18px', fontSize: 13 }}
+          >
+            <Icon.whatsapp style={{ width: 16, height: 16 }} /> Pedí ahora
+          </a>
+        </div>
       </div>
-    </motion.header>
+
+      {/* ---------- Mobile topbar ---------- */}
+      <div className="m-topbar lg:hidden">
+        <div className="flex w-14">
+          <button
+            className="icon-btn"
+            aria-label="Menú"
+            onClick={() => setMenuOpen((o) => !o)}
+          >
+            <Icon.menu />
+          </button>
+        </div>
+        <Link
+          href="/"
+          className="flex flex-1 items-center justify-center gap-2"
+          aria-label="Inicio"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={LOGO_BADGE}
+            alt="MIINUTA. CARNES"
+            className="h-16 w-16 object-contain"
+          />
+          <Logo className="scale-[0.82]" />
+        </Link>
+        <div className="flex w-14 justify-end">
+          <Link href="/cart" className="icon-btn" aria-label={`Carrito (${itemCount})`}>
+            <Icon.cart />
+            {itemCount > 0 && (
+              <span className="badge-count tnum">{itemCount > 99 ? '99+' : itemCount}</span>
+            )}
+          </Link>
+        </div>
+      </div>
+
+      {/* Drawer mobile */}
+      {menuOpen && (
+        <nav
+          className="flex flex-col gap-1 border-t border-[var(--line-soft)] bg-bg px-5 py-3 lg:hidden"
+          aria-label="Navegación móvil"
+        >
+          {NAV.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              onClick={() => setMenuOpen(false)}
+              className={cn('nav-link py-3', isActive(n.href) && 'active')}
+            >
+              {n.label}
+            </Link>
+          ))}
+          <Link
+            href="/mis-pedidos"
+            onClick={() => setMenuOpen(false)}
+            className={cn('nav-link py-3', isActive('/mis-pedidos') && 'active')}
+          >
+            Mis pedidos
+          </Link>
+        </nav>
+      )}
+    </header>
   );
 }

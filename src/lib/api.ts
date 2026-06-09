@@ -63,6 +63,7 @@ export const api = {
     customerName: string;
     customerPhone: string;
     customerAddress?: string;
+    customerZipCode?: string;
     customerEmail?: string;
     items: { productId: string; quantity: number }[];
   }) => {

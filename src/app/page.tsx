@@ -1,12 +1,5 @@
-'use client';
-
-import { HeroSection } from '@/components/home/HeroSection';
-import { PageTransition } from '@/components/layout/PageTransition';
+import { HomeContent } from '@/components/home/HomeContent';
 
 export default function HomePage() {
-  return (
-    <PageTransition>
-      <HeroSection />
-    </PageTransition>
-  );
+  return <HomeContent />;
 }

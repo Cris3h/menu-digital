@@ -1,23 +1,70 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Anton, Zilla_Slab, Manrope } from 'next/font/google';
 import './globals.css';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
+import { AnalyticsTracker } from '@/components/layout/AnalyticsTracker';
 import { ToastContainer } from '@/components/ui/ToastContainer';
+import { SITE_LANDING_IMAGE_URL, SITE_NAME } from '@/lib/constants';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+function getMetadataBase(): URL {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL);
+  }
+  if (process.env.VERCEL_URL) {
+    return new URL(`https://${process.env.VERCEL_URL}`);
+  }
+  return new URL('http://localhost:3000');
+}
+
+const siteDescription =
+  'La verdadera milanesa artesanal. Crujiente por fuera, increíble por dentro.';
+
+const anton = Anton({
+  variable: '--font-anton-var',
+  weight: '400',
   subsets: ['latin'],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const zillaSlab = Zilla_Slab({
+  variable: '--font-zilla-var',
+  weight: ['600', '700'],
   subsets: ['latin'],
+  display: 'swap',
+});
+
+const manrope = Manrope({
+  variable: '--font-manrope-var',
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'miinuta — Milanesas con mucho sabor',
-  description:
-    'La verdadera milanesa artesanal. Crujiente por fuera, increíble por dentro.',
+  metadataBase: getMetadataBase(),
+  title: `${SITE_NAME} — Milanesas con mucho sabor`,
+  description: siteDescription,
+  openGraph: {
+    type: 'website',
+    locale: 'es_AR',
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — Milanesas con mucho sabor`,
+    description: siteDescription,
+    images: [
+      {
+        url: SITE_LANDING_IMAGE_URL,
+        width: 1200,
+        height: 1200,
+        alt: `${SITE_NAME} — Carnes y milanesas`,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${SITE_NAME} — Milanesas con mucho sabor`,
+    description: siteDescription,
+    images: [SITE_LANDING_IMAGE_URL],
+  },
 };
 
 export default function RootLayout({
@@ -28,9 +75,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
+        className={`${anton.variable} ${zillaSlab.variable} ${manrope.variable} flex min-h-screen flex-col antialiased`}
       >
         <ConditionalLayout>{children}</ConditionalLayout>
+        <AnalyticsTracker />
         <ToastContainer />
       </body>
     </html>

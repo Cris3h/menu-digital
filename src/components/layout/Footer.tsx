@@ -1,7 +1,6 @@
-'use client';
-
 import Link from 'next/link';
-import { Phone, MapPin, Clock } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
+import { Icon } from '@/components/ui/Icons';
 import { getWhatsAppUrl } from '@/lib/utils';
 import {
   WHATSAPP_NUMBER,
@@ -11,83 +10,111 @@ import {
   BUSINESS_HOURS,
 } from '@/lib/constants';
 
+const COLS: [string, { label: string; href: string }[]][] = [
+  [
+    'Tienda',
+    [
+      { label: 'Catálogo', href: '/menu' },
+      { label: 'Combos', href: '/combos' },
+      { label: 'Cortes premium', href: '/menu' },
+      { label: 'Congelados', href: '/menu' },
+    ],
+  ],
+  [
+    'Empresa',
+    [
+      { label: 'Nosotros', href: '/nosotros' },
+      { label: 'Sucursal', href: '/contacto' },
+      { label: 'Contacto', href: '/contacto' },
+    ],
+  ],
+  [
+    'Ayuda',
+    [
+      { label: 'Cómo pedir', href: '/contacto' },
+      { label: 'Zona de entrega', href: '/contacto' },
+      { label: 'Mis pedidos', href: '/mis-pedidos' },
+    ],
+  ],
+];
+
 export function Footer() {
   const whatsappUrl = getWhatsAppUrl(WHATSAPP_NUMBER, WHATSAPP_MESSAGE);
-  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-gold-300/20 bg-dark-800">
-      {/* Contenido principal */}
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {/* Branding - full width en mobile */}
-          <div>
-            <h3 className="text-2xl font-bold text-gold-200">miinuta</h3>
-            <p className="mt-2 text-sm text-white/80">
-              Milanesas con onda.
-            </p>
-            <p className="mt-1 text-sm text-white/50">
-              Cocina casera, sabor de verdad.
-            </p>
+    <footer className="mt-2 hidden border-t border-[var(--line)] px-8 pt-[46px] lg:block">
+      <div className="mx-auto flex max-w-[1440px] justify-between gap-10 pb-10">
+        <div className="max-w-[300px]">
+          <Logo />
+          <p className="mt-[18px] text-[13.5px] leading-[1.6] text-tan-dim">
+            Carnicería de barrio en Junín. Cortes seleccionados y milanesas al
+            día, del mostrador a tu casa.
+          </p>
+          <div className="mt-[18px] flex gap-2.5">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="icon-btn"
+              style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}
+            >
+              <Icon.instagram />
+            </a>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="icon-btn"
+              style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}
+            >
+              <Icon.whatsapp style={{ width: 19, height: 19 }} />
+            </a>
           </div>
+        </div>
 
-          {/* Links + Contacto: 2 cols en mobile, separados en tablet/desktop */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:contents">
-            {/* Links de navegación */}
-            <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gold-200">
-                Navegación
-              </h4>
-              <nav className="flex flex-col gap-2">
-                <Link
-                  href="/"
-                  className="text-sm text-white/70 transition-colors hover:text-gold-200"
-                >
-                  Inicio
-                </Link>
-                <Link
-                  href="/menu"
-                  className="text-sm text-white/70 transition-colors hover:text-gold-200"
-                >
-                  Menú
-                </Link>
-              </nav>
+        {COLS.map(([heading, items]) => (
+          <div key={heading}>
+            <div className="eyebrow mb-4" style={{ color: 'var(--gold)' }}>
+              {heading}
             </div>
+            <div className="flex flex-col gap-[11px]">
+              {items.map((i) => (
+                <Link
+                  key={i.label}
+                  href={i.href}
+                  className="text-[13.5px] text-tan transition-colors hover:text-cream"
+                >
+                  {i.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
 
-            {/* Contacto */}
-            <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gold-200">
-                Contacto
-              </h4>
-              <div className="flex flex-col gap-3 text-sm text-white/70">
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 transition-colors hover:text-gold-200"
-                >
-                  <Phone className="h-4 w-4 shrink-0" />
-                  <span>{CONTACT_PHONE}</span>
-                </a>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 shrink-0" />
-                  <span>{DELIVERY_ZONE}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 shrink-0" />
-                  <span>{BUSINESS_HOURS}</span>
-                </div>
-              </div>
-            </div>
+        <div>
+          <div className="eyebrow mb-4" style={{ color: 'var(--gold)' }}>
+            Contacto
+          </div>
+          <div className="flex flex-col gap-[11px] text-[13.5px] text-tan">
+            <span className="flex items-center gap-[9px]">
+              <Icon.mapPin style={{ width: 15, height: 15, color: 'var(--gold)' }} />{' '}
+              {DELIVERY_ZONE}
+            </span>
+            <span className="flex items-center gap-[9px]">
+              <Icon.phone style={{ width: 15, height: 15, color: 'var(--gold)' }} />{' '}
+              {CONTACT_PHONE}
+            </span>
+            <span className="flex items-center gap-[9px]">
+              <Icon.clock style={{ width: 15, height: 15, color: 'var(--gold)' }} />{' '}
+              {BUSINESS_HOURS}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Copyright */}
-      <div className="border-t border-gold-300/10 bg-dark-900/50 px-4 py-4 sm:px-6 lg:px-8">
-        <p className="text-center text-sm text-white/50">
-          © {currentYear} miinuta. Hecho con ❤️.
-        </p>
+      <div className="mx-auto flex max-w-[1440px] justify-between border-t border-[var(--line-soft)] py-[18px] pb-[22px] text-[12.5px] text-tan-dim">
+        <span>© 2026 MIINUTA. CARNES · Junín, Buenos Aires</span>
+        <span>Hecho con fuego 🔥 en el barrio</span>
       </div>
     </footer>
   );

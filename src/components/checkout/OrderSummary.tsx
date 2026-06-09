@@ -1,7 +1,7 @@
 'use client';
 
 import type { CartItem } from '@/store/cart';
-import { formatPrice } from '@/lib/utils';
+import { fmtPrice } from '@/lib/utils';
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -10,37 +10,59 @@ interface OrderSummaryProps {
 
 export function OrderSummary({ items, total }: OrderSummaryProps) {
   return (
-    <div className="rounded-xl border border-gold-300/20 bg-dark-800 p-6">
-      <h3 className="text-lg font-semibold text-gold-200">Resumen del pedido</h3>
-      <div className="mt-4 max-h-[300px] space-y-3 overflow-y-auto pr-1">
-        {items.map((item) => {
-          const subtotal = item.price * item.quantity;
-          return (
-            <div
-              key={item.productId}
-              className="flex justify-between gap-2 text-sm"
-            >
-              <span className="text-white/90">
-                {item.name} ×{item.quantity}
-              </span>
-              <span className="shrink-0 text-gold-100">
-                {formatPrice(subtotal)}
-              </span>
+    <div
+      className="rounded-[18px] p-6"
+      style={{
+        background: 'linear-gradient(180deg,var(--panel),var(--card-b))',
+        boxShadow: 'inset 0 0 0 1px var(--line)',
+      }}
+    >
+      <h3 className="font-display mb-4 text-[22px] text-cream">Tu pedido</h3>
+      <div className="flex max-h-[320px] flex-col overflow-y-auto">
+        {items.map((item) => (
+          <div
+            key={item.productId}
+            className="flex items-center gap-3 py-[11px]"
+            style={{ boxShadow: 'inset 0 -1px 0 var(--line-soft)' }}
+          >
+            <div className="h-[46px] w-[46px] shrink-0 overflow-hidden rounded-[10px]">
+              {item.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.imageUrl}
+                  alt={item.name}
+                  className="h-full w-full object-cover"
+                />
+              )}
             </div>
-          );
-        })}
+            <div className="min-w-0 flex-1">
+              <div className="text-[13.5px] font-bold text-cream">{item.name}</div>
+              <div className="text-[12px] text-tan-dim">{item.quantity} kg</div>
+            </div>
+            <span className="tnum text-[14px] font-extrabold text-tan">
+              {fmtPrice(item.price * item.quantity)}
+            </span>
+          </div>
+        ))}
       </div>
-      <div className="mt-4 space-y-2 border-t border-gold-300/20 pt-4">
-        <div className="flex justify-between text-white/80">
+      <div className="flex flex-col gap-[9px] pt-4">
+        <div className="flex justify-between text-[13.5px] text-tan">
           <span>Subtotal</span>
-          <span>{formatPrice(total)}</span>
+          <span className="tnum">{fmtPrice(total)}</span>
         </div>
-        <div className="flex justify-between pt-2">
-          <span className="text-xl font-semibold text-white">Total</span>
-          <span className="text-2xl font-bold text-gold-100">
-            {formatPrice(total)}
-          </span>
+        <div className="flex justify-between text-[13.5px] text-tan">
+          <span>Envío</span>
+          <span className="text-gold">A confirmar</span>
         </div>
+      </div>
+      <div
+        className="my-4 flex items-center justify-between pt-3.5"
+        style={{ boxShadow: 'inset 0 1px 0 var(--line)' }}
+      >
+        <span className="eyebrow">Total</span>
+        <span className="price" style={{ fontSize: 28 }}>
+          {fmtPrice(total)}
+        </span>
       </div>
     </div>
   );

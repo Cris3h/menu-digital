@@ -1,22 +1,38 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { Logo } from '@/components/ui/Logo';
+import { Icon } from '@/components/ui/Icons';
 import { LoginForm } from '@/components/admin/LoginForm';
 
 export default function AdminLoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-dark-900 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="w-full max-w-[400px] rounded-lg border border-gold-300/30 bg-dark-800 p-8 shadow-xl"
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-4">
+      <div
+        className="w-full max-w-[420px] rounded-[20px] p-8"
+        style={{
+          background: 'linear-gradient(180deg,var(--panel),var(--card-b))',
+          boxShadow: 'inset 0 0 0 1px var(--line), var(--shadow)',
+        }}
       >
-        <h1 className="mb-8 text-center text-4xl font-bold text-gold-200">
-          miinuta Admin
-        </h1>
+        <div className="mb-6 flex flex-col items-center gap-4">
+          <span
+            className="flex h-[54px] w-[54px] items-center justify-center rounded-[14px] text-gold"
+            style={{ background: 'rgba(216,162,62,.12)', boxShadow: 'inset 0 0 0 1px var(--line)' }}
+          >
+            <Icon.lock style={{ width: 26, height: 26 }} />
+          </span>
+          <Logo />
+          <div className="text-center">
+            <div className="eyebrow" style={{ color: 'var(--gold)' }}>
+              Panel de administración
+            </div>
+            <p className="mt-1.5 text-[13px] text-tan-dim">
+              Acceso solo para el equipo. No visible para clientes.
+            </p>
+          </div>
+        </div>
         <LoginForm />
-      </motion.div>
+      </div>
     </div>
   );
 }

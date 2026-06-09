@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import {
+  SITE_LANDING_IMAGE_URL,
   WHATSAPP_NUMBER,
   WHATSAPP_MESSAGE,
   WHATSAPP_MESSAGE_DELIVERY,
 } from '@/lib/constants';
 import { getWhatsAppUrl } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 import { MapPin } from 'lucide-react';
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -24,9 +26,6 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-const HERO_BG_IMAGE =
-  'https://res.cloudinary.com/dj1hi4rjf/image/upload/v1773515597/img50.jpg';
-
 export function HeroSection() {
   const whatsappUrl = getWhatsAppUrl(WHATSAPP_NUMBER, WHATSAPP_MESSAGE);
   const whatsappDeliveryUrl = getWhatsAppUrl(
@@ -39,7 +38,7 @@ export function HeroSection() {
       {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${HERO_BG_IMAGE})` }}
+        style={{ backgroundImage: `url(${SITE_LANDING_IMAGE_URL})` }}
         aria-hidden
       />
       {/* Dark blur overlay for contrast */}
@@ -64,7 +63,7 @@ export function HeroSection() {
           transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
           className="mt-4 max-w-md text-lg text-white/95 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] sm:text-xl"
         >
-          Milanesas con onda. Cocina casera, sabor de verdad.
+          La verdadera milanesa artesanal. Crujiente por fuera, increíble por dentro.
         </motion.p>
 
         <motion.div
@@ -90,6 +89,7 @@ export function HeroSection() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackEvent('whatsapp_click', { useBeacon: true })}
             className="flex flex-1 min-w-0 sm:flex-initial sm:min-w-[240px] items-center justify-center gap-2 rounded-lg border border-gold-300/30 bg-dark-800/50 px-4 py-2 transition-all hover:border-gold-300/60 hover:bg-dark-800"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -103,6 +103,7 @@ export function HeroSection() {
             href={whatsappDeliveryUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackEvent('whatsapp_click', { useBeacon: true })}
             className="flex flex-1 min-w-0 sm:flex-initial sm:min-w-[240px] items-center justify-center gap-2 rounded-lg border border-gold-300/30 bg-dark-800/50 px-4 py-2 transition-all hover:border-gold-300/60 hover:bg-dark-800"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

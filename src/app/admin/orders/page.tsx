@@ -11,6 +11,7 @@ import { OrdersTableSkeleton } from '@/components/admin/OrdersTableSkeleton';
 import { OrderDetailModal } from '@/components/admin/OrderDetailModal';
 import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
 import { Select } from '@/components/ui/Select';
+import { AdminPageHeader } from '@/components/admin/AdminUI';
 
 const LIMIT = 20;
 
@@ -64,9 +65,10 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold text-gold-200">Pedidos</h1>
-      </div>
+      <AdminPageHeader
+        title="Pedidos"
+        subtitle={total > 0 ? `${total} pedidos en total` : undefined}
+      />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="w-full sm:w-44">

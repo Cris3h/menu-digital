@@ -1,27 +1,25 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Product, Category, PaginatedResponse } from '@/lib/types';
 import { useCartStore } from '@/store/cart';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
-import { SearchBar } from '@/components/menu/SearchBar';
-import { CategoryFilter } from '@/components/menu/CategoryFilter';
-import { SortDropdown } from '@/components/menu/SortDropdown';
+import { cn } from '@/lib/utils';
+import { Icon } from '@/components/ui/Icons';
+import { Price } from '@/components/ui/Price';
 import { ProductCard } from '@/components/menu/ProductCard';
-import { ProductCardPlaceholder } from '@/components/menu/ProductCardPlaceholder';
 import { ProductCardSkeleton } from '@/components/menu/ProductCardSkeleton';
-import { ProductModal } from '@/components/menu/ProductModal';
 import { ScrollToTop } from '@/components/menu/ScrollToTop';
 
 const ITEMS_PER_PAGE = 8;
 
 export function MenuContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const toast = useToast();
   const items = useCartStore((s) => s.items);
   const addItem = useCartStore((s) => s.addItem);
@@ -33,9 +31,6 @@ export function MenuContent() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     () => searchParams.get('category') ?? null
   );
-  const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc'>('price-asc');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
@@ -44,25 +39,21 @@ export function MenuContent() {
     if (debouncedSearch) params.set('search', debouncedSearch);
     if (selectedCategoryId) params.set('category', selectedCategoryId);
     const qs = params.toString();
-    const url = qs ? `/menu?${qs}` : '/menu';
-    window.history.replaceState(null, '', url);
+    window.history.replaceState(null, '', qs ? `/menu?${qs}` : '/menu');
   }, [debouncedSearch, selectedCategoryId]);
 
-  // Reset page when category changes
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategoryId]);
 
   const { data: productsData, error: productsError } = useSWR<
     PaginatedResponse<Product>
-  >(
-    ['products', selectedCategoryId, currentPage],
-    () =>
-      api.getProducts({
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
-        categoryId: selectedCategoryId ?? undefined,
-      })
+  >(['products', selectedCategoryId, currentPage], () =>
+    api.getProducts({
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+      categoryId: selectedCategoryId ?? undefined,
+    })
   );
 
   const { data: categoriesData } = useSWR<PaginatedResponse<Category>>(
@@ -79,14 +70,8 @@ export function MenuContent() {
       )
     : products;
 
-  const sortedProducts = [...filteredBySearch].sort((a, b) =>
-    sortBy === 'price-asc' ? a.price - b.price : b.price - a.price
-  );
-
   const isLoading = !productsData && !productsError;
-  const hasProducts = sortedProducts.length > 0;
-  const hasFilters = searchQuery || selectedCategoryId || sortBy !== 'price-asc';
-  const totalProducts = productsData?.total ?? 0;
+  const hasProducts = filteredBySearch.length > 0;
   const totalPages = productsData?.totalPages ?? 1;
 
   const getCartQuantity = useCallback(
@@ -114,16 +99,10 @@ export function MenuContent() {
     [toast]
   );
 
-  const handleClearFilters = useCallback(() => {
-    setSearchQuery('');
-    setSelectedCategoryId(null);
-    setSortBy('price-asc');
-  }, []);
-
-  const handleCardClick = useCallback((product: Product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-  }, []);
+  const handleCardClick = useCallback(
+    (product: Product) => router.push(`/producto/${product._id}`),
+    [router]
+  );
 
   const handleAddFromCard = useCallback(
     (e: React.MouseEvent, product: Product) => {
@@ -137,51 +116,53 @@ export function MenuContent() {
 
   return (
     <>
-        <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gold-200 sm:text-5xl">
-            Nuestro Menú
-          </h1>
-          <p className="mt-2 text-lg text-white/70">
-            Explorá nuestra selección de milanesas
-          </p>
+      <section className="mx-auto max-w-[1440px] px-[18px] pb-8 pt-5 lg:px-8 lg:pt-[30px]">
+        {/* Encabezado */}
+        <div className="eyebrow" style={{ color: 'var(--gold)' }}>
+          Nuestro catálogo
         </div>
+        <h1 className="font-display my-[10px] text-[32px] text-cream lg:text-[44px]">
+          Elegí tu corte
+        </h1>
 
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-            <SortDropdown value={sortBy} onChange={setSortBy} />
+        {/* Búsqueda + filtros */}
+        <div className="mb-5 flex flex-col gap-[14px] lg:mb-[26px] lg:flex-row lg:items-center">
+          <div className="cat-search lg:max-w-[420px]">
+            <Icon.search />
+            <input
+              placeholder="Buscar productos…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <CategoryFilter
-            categories={categories}
-            selected={selectedCategoryId}
-            onSelect={setSelectedCategoryId}
-          />
-          {hasFilters && (
-            <div className="flex items-center justify-between rounded-xl border border-gold-300/20 bg-dark-800/50 px-4 py-3">
-              <span className="text-sm text-white/70">
-                {sortedProducts.length} producto
-                {sortedProducts.length !== 1 ? 's' : ''} encontrado
-                {sortedProducts.length !== 1 ? 's' : ''}
-              </span>
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="flex items-center gap-2 text-sm font-medium text-gold-200 transition-colors hover:text-gold-100"
-              >
-                <X className="size-4" />
-                Limpiar filtros
-              </button>
-            </div>
-          )}
+          <div className="filter-tabs lg:ml-auto lg:gap-2.5">
+            <button
+              className={cn('ftab', !selectedCategoryId && 'active')}
+              onClick={() => setSelectedCategoryId(null)}
+              style={pillStyle(!selectedCategoryId)}
+            >
+              Todos
+            </button>
+            {categories.map((c) => {
+              const active = selectedCategoryId === c._id;
+              return (
+                <button
+                  key={c._id}
+                  className={cn('ftab', active && 'active')}
+                  onClick={() => setSelectedCategoryId(c._id)}
+                  style={pillStyle(active)}
+                >
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {productsError && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-4 text-center">
-            <p className="font-medium text-red-400">
-              No pudimos cargar los productos
-            </p>
-            <p className="mt-1 text-sm text-white/70">
+          <div className="rounded-xl px-6 py-4 text-center" style={cardStyle}>
+            <p className="font-bold text-cream">No pudimos cargar los productos</p>
+            <p className="mt-1 text-sm text-tan-dim">
               {productsError instanceof Error
                 ? productsError.message
                 : 'Error desconocido'}
@@ -190,131 +171,125 @@ export function MenuContent() {
         )}
 
         {!isLoading && !productsError && !hasProducts && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="mb-4 rounded-full bg-dark-700 p-6">
-              <Search className="size-12 text-white/40" />
-            </div>
-            <h3 className="text-xl font-semibold text-white">
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <span className="mb-4 text-gold">
+              <Icon.search style={{ width: 44, height: 44 }} />
+            </span>
+            <h3 className="text-xl font-bold text-cream">
               No encontramos productos
             </h3>
-            <p className="mt-2 text-center text-white/70">
-              {hasFilters
-                ? 'Probá con otros filtros o limpiá la búsqueda'
-                : 'Por el momento no hay productos disponibles'}
+            <p className="mt-2 text-tan-dim">
+              Probá con otros filtros o limpiá la búsqueda.
             </p>
-            {hasFilters && (
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="mt-6 rounded-lg bg-gold-200 px-6 py-2.5 font-semibold text-dark-900 transition-colors hover:bg-gold-100"
-              >
-                Limpiar filtros
-              </button>
-            )}
           </div>
-        )}
-
-        {!productsError && hasProducts && (
-          <p className="mb-4 text-sm text-white/70">
-            Página {currentPage} de {totalPages}
-            {totalProducts > 0 &&
-              ` · ${sortedProducts.length} de ${totalProducts} productos`}
-          </p>
         )}
 
         {!productsError && (
           <>
-            <div className="grid grid-cols-1 grid-rows-[auto] gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+            {/* Desktop: grid de pcards */}
+            <div className="hidden grid-cols-2 gap-[18px] sm:grid lg:grid-cols-4">
               {isLoading
                 ? Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
                     <ProductCardSkeleton key={i} />
                   ))
-                : (() => {
-                    const placeholdersCount = Math.max(
-                      0,
-                      ITEMS_PER_PAGE - sortedProducts.length
-                    );
-                    return (
-                      <>
-                        {sortedProducts.map((product) => (
-                          <ProductCard
-                            key={product._id}
-                            product={product}
-                            onClick={() => handleCardClick(product)}
-                            onAddToCart={(e) => handleAddFromCard(e, product)}
-                            cartQuantity={getCartQuantity(product._id)}
-                          />
-                        ))}
-                        {Array.from({ length: placeholdersCount }).map(
-                          (_, i) => (
-                            <ProductCardPlaceholder
-                              key={`placeholder-${i}`}
-                            />
-                          )
-                        )}
-                      </>
-                    );
-                  })()}
+                : filteredBySearch.map((product) => (
+                    <ProductCard
+                      key={product._id}
+                      product={product}
+                      onClick={() => handleCardClick(product)}
+                      onAddToCart={(e) => handleAddFromCard(e, product)}
+                      cartQuantity={getCartQuantity(product._id)}
+                    />
+                  ))}
             </div>
 
+            {/* Mobile: list-rows */}
+            <div className="flex flex-col gap-3 sm:hidden">
+              {isLoading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))
+                : filteredBySearch.map((product) => (
+                    <div
+                      key={product._id}
+                      className="list-row"
+                      onClick={() => handleCardClick(product)}
+                    >
+                      <div className="thumb">
+                        {product.imageUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={product.imageUrl} alt={product.name} />
+                        )}
+                      </div>
+                      <div className="info">
+                        <div className="rname">{product.name}</div>
+                        <Price value={product.price} style={{ fontSize: 15 }} />
+                      </div>
+                      <button
+                        className="add-btn"
+                        onClick={(e) => handleAddFromCard(e, product)}
+                        disabled={product.stock <= 0}
+                        aria-label="Agregar al carrito"
+                      >
+                        <Icon.plus />
+                      </button>
+                    </div>
+                  ))}
+            </div>
+
+            {/* Paginación */}
             {hasProducts && totalPages > 1 && (
               <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                 <button
-                  type="button"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage <= 1}
-                  className="flex h-10 items-center gap-1 rounded-lg border border-gold-300/30 bg-dark-800/50 px-4 py-2 text-sm font-medium text-gold-200 transition-colors hover:bg-gold-300/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="icon-btn"
+                  style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}
+                  aria-label="Anterior"
                 >
-                  <ChevronLeft className="size-4" />
-                  Anterior
+                  <Icon.chevLeft />
                 </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <button
-                        key={page}
-                        type="button"
-                        onClick={() => setCurrentPage(page)}
-                        className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                          currentPage === page
-                            ? 'bg-gold-200 text-dark-900'
-                            : 'border border-gold-300/30 bg-dark-800/50 text-gold-200 hover:bg-gold-300/10'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    )
-                  )}
-                </div>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className="ftab flex h-10 w-10 items-center justify-center rounded-[11px]"
+                    style={pillStyle(currentPage === page)}
+                  >
+                    {page}
+                  </button>
+                ))}
                 <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
-                  className="flex h-10 items-center gap-1 rounded-lg border border-gold-300/30 bg-dark-800/50 px-4 py-2 text-sm font-medium text-gold-200 transition-colors hover:bg-gold-300/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="icon-btn"
+                  style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}
+                  aria-label="Siguiente"
                 >
-                  Siguiente
-                  <ChevronRight className="size-4" />
+                  <Icon.arrowRight />
                 </button>
               </div>
             )}
           </>
         )}
-      </div>
-
-      <ProductModal
-        product={selectedProduct}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAddToCart={handleAddToCart}
-        onShowToast={handleShowToast}
-        cartQuantity={
-          selectedProduct ? getCartQuantity(selectedProduct._id) : 0
-        }
-      />
+      </section>
 
       <ScrollToTop />
     </>
   );
 }
+
+function pillStyle(active: boolean): React.CSSProperties {
+  return {
+    padding: '10px 18px',
+    borderRadius: 11,
+    background: active ? 'var(--gold)' : 'var(--panel)',
+    color: active ? '#2a1c08' : 'var(--tan)',
+    boxShadow: active ? 'none' : 'inset 0 0 0 1px var(--line)',
+  };
+}
+
+const cardStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg,var(--card-a),var(--card-b))',
+  boxShadow: 'inset 0 0 0 1px var(--line)',
+};

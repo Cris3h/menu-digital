@@ -1,26 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import type { CheckoutFormData } from '@/lib/types';
 import type { CheckoutFormErrors } from '@/lib/validations';
 import { validateCheckoutForm } from '@/lib/validations';
-import { Button } from '@/components/ui/Button';
+import { Icon, type IconName } from '@/components/ui/Icons';
+import { fmtPrice } from '@/lib/utils';
 
 interface CheckoutFormProps {
   onSubmit: (data: CheckoutFormData) => void;
   loading: boolean;
+  total: number;
 }
 
 const INITIAL_DATA: CheckoutFormData = {
   customerName: '',
   customerPhone: '',
   customerAddress: '',
+  customerZipCode: '',
   customerEmail: '',
   notes: '',
 };
 
-export function CheckoutForm({ onSubmit, loading }: CheckoutFormProps) {
+export function CheckoutForm({ onSubmit, loading, total }: CheckoutFormProps) {
   const [data, setData] = useState<CheckoutFormData>(INITIAL_DATA);
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -33,7 +35,10 @@ export function CheckoutForm({ onSubmit, loading }: CheckoutFormProps) {
         customerPhone: field === 'customerPhone' ? value : data.customerPhone,
         customerEmail: field === 'customerEmail' ? value : data.customerEmail,
       });
-      setErrors((prev) => ({ ...prev, [field]: newErrors[field as keyof typeof newErrors] }));
+      setErrors((prev) => ({
+        ...prev,
+        [field]: newErrors[field as keyof typeof newErrors],
+      }));
     }
   };
 
@@ -45,7 +50,10 @@ export function CheckoutForm({ onSubmit, loading }: CheckoutFormProps) {
       customerPhone: data.customerPhone,
       customerEmail: data.customerEmail,
     });
-    setErrors((prev) => ({ ...prev, [field]: newErrors[field as keyof typeof newErrors] }));
+    setErrors((prev) => ({
+      ...prev,
+      [field]: newErrors[field as keyof typeof newErrors],
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,11 +64,7 @@ export function CheckoutForm({ onSubmit, loading }: CheckoutFormProps) {
       customerEmail: data.customerEmail,
     });
     setErrors(newErrors);
-    setTouched({
-      customerName: true,
-      customerPhone: true,
-      customerEmail: true,
-    });
+    setTouched({ customerName: true, customerPhone: true, customerEmail: true });
 
     const hasErrors = Object.values(newErrors).some(Boolean);
     if (hasErrors || !data.customerName.trim() || !data.customerPhone.trim()) {
@@ -71,145 +75,199 @@ export function CheckoutForm({ onSubmit, loading }: CheckoutFormProps) {
       customerName: data.customerName.trim(),
       customerPhone: data.customerPhone.trim(),
       customerAddress: data.customerAddress?.trim() || undefined,
+      customerZipCode: data.customerZipCode?.trim() || undefined,
       customerEmail: data.customerEmail?.trim() || undefined,
       notes: data.notes?.trim() || undefined,
     });
   };
 
   const hasErrors = Object.values(errors).some(Boolean);
-  const missingRequired =
-    !data.customerName.trim() || !data.customerPhone.trim();
+  const missingRequired = !data.customerName.trim() || !data.customerPhone.trim();
   const isDisabled = hasErrors || missingRequired || loading;
 
-  const inputBase =
-    'w-full rounded-lg border bg-dark-700 px-4 py-3 text-white placeholder:text-white/40 focus:border-gold-300 focus:outline-none focus:ring-2 focus:ring-gold-300/50 transition-colors';
-  const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20';
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label
-          htmlFor="customerName"
-          className="mb-2 block font-semibold text-gold-200"
-        >
-          Nombre completo *
-        </label>
-        <input
-          id="customerName"
-          type="text"
-          value={data.customerName}
-          onChange={(e) => handleChange('customerName', e.target.value)}
-          onBlur={() => handleBlur('customerName')}
-          placeholder="Juan Pérez"
-          disabled={loading}
-          className={`${inputBase} ${errors.customerName ? inputError : 'border-gold-300/20'}`}
-        />
-        {errors.customerName && (
-          <p className="mt-1 text-sm text-red-400">{errors.customerName}</p>
-        )}
-      </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+      {/* Datos de entrega */}
+      <section>
+        <h2 className="font-display mb-4 text-[22px] text-cream lg:text-[26px]">
+          Datos de entrega
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <DesignField
+            label="Nombre completo *"
+            icon="user"
+            placeholder="Martina Gómez"
+            value={data.customerName}
+            onChange={(v) => handleChange('customerName', v)}
+            onBlur={() => handleBlur('customerName')}
+            error={errors.customerName}
+            disabled={loading}
+          />
+          <DesignField
+            label="Teléfono *"
+            icon="phone"
+            type="tel"
+            placeholder="236 555-1234"
+            value={data.customerPhone}
+            onChange={(v) => handleChange('customerPhone', v)}
+            onBlur={() => handleBlur('customerPhone')}
+            error={errors.customerPhone}
+            disabled={loading}
+          />
+          <div className="sm:col-span-2">
+            <DesignField
+              label="Dirección de entrega"
+              icon="mapPin"
+              placeholder="Belgrano 842"
+              value={data.customerAddress || ''}
+              onChange={(v) => handleChange('customerAddress', v)}
+              disabled={loading}
+            />
+          </div>
+          <DesignField
+            label="Código postal"
+            placeholder="6000"
+            value={data.customerZipCode || ''}
+            onChange={(v) => handleChange('customerZipCode', v)}
+            disabled={loading}
+          />
+          <DesignField
+            label="Email"
+            icon="mail"
+            type="email"
+            placeholder="martina@email.com"
+            value={data.customerEmail || ''}
+            onChange={(v) => handleChange('customerEmail', v)}
+            onBlur={() => handleBlur('customerEmail')}
+            error={errors.customerEmail}
+            disabled={loading}
+          />
+          <div className="sm:col-span-2">
+            <div className="field">
+              <span className="field-lbl">Notas (opcional)</span>
+              <div className="field-input" style={{ height: 'auto', padding: '12px 15px' }}>
+                <textarea
+                  value={data.notes || ''}
+                  onChange={(e) => handleChange('notes', e.target.value.slice(0, 500))}
+                  placeholder="Ej: tocar timbre 2 veces"
+                  rows={2}
+                  maxLength={500}
+                  disabled={loading}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <div>
-        <label
-          htmlFor="customerPhone"
-          className="mb-2 block font-semibold text-gold-200"
-        >
-          Teléfono *
-        </label>
-        <input
-          id="customerPhone"
-          type="tel"
-          value={data.customerPhone}
-          onChange={(e) => handleChange('customerPhone', e.target.value)}
-          onBlur={() => handleBlur('customerPhone')}
-          placeholder="+54 9 341 123-4567"
-          disabled={loading}
-          className={`${inputBase} ${errors.customerPhone ? inputError : 'border-gold-300/20'}`}
-        />
-        {errors.customerPhone && (
-          <p className="mt-1 text-sm text-red-400">{errors.customerPhone}</p>
-        )}
-      </div>
+      {/* Método de entrega */}
+      <section>
+        <h2 className="font-display mb-4 text-[22px] text-cream lg:text-[26px]">
+          Método de entrega
+        </h2>
+        <div className="opt-card sel">
+          <span className="dot" />
+          <span className="oi">
+            <Icon.truck />
+          </span>
+          <div>
+            <div className="text-[14.5px] font-bold text-cream">
+              Delivery a domicilio
+            </div>
+            <div className="text-[12.5px] text-tan-dim">
+              Hoy · antes de las 22h
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <div>
-        <label
-          htmlFor="customerAddress"
-          className="mb-2 block font-semibold text-gold-200"
-        >
-          Dirección de entrega
-        </label>
-        <input
-          id="customerAddress"
-          type="text"
-          value={data.customerAddress || ''}
-          onChange={(e) => handleChange('customerAddress', e.target.value)}
-          placeholder="Calle 123, Rosario, Santa Fe"
-          disabled={loading}
-          className={`${inputBase} border-gold-300/20`}
-        />
-      </div>
+      {/* Pago */}
+      <section>
+        <h2 className="font-display mb-4 text-[22px] text-cream lg:text-[26px]">
+          Pago
+        </h2>
+        <div className="opt-card sel">
+          <span className="dot" />
+          <span className="oi">
+            <Icon.creditCard />
+          </span>
+          <div className="flex-1">
+            <div className="text-[14.5px] font-bold text-cream">
+              Mercado Pago
+            </div>
+            <div className="text-[12.5px] text-tan-dim">
+              Tarjeta, débito, dinero en cuenta. Pago protegido.
+            </div>
+          </div>
+          <Icon.lock style={{ width: 18, height: 18, color: 'var(--gold)' }} />
+        </div>
+      </section>
 
-      <div>
-        <label
-          htmlFor="customerEmail"
-          className="mb-2 block font-semibold text-gold-200"
-        >
-          Email
-        </label>
-        <input
-          id="customerEmail"
-          type="email"
-          value={data.customerEmail || ''}
-          onChange={(e) => handleChange('customerEmail', e.target.value)}
-          onBlur={() => handleBlur('customerEmail')}
-          placeholder="juan@ejemplo.com"
-          disabled={loading}
-          className={`${inputBase} ${errors.customerEmail ? inputError : 'border-gold-300/20'}`}
-        />
-        {errors.customerEmail && (
-          <p className="mt-1 text-sm text-red-400">{errors.customerEmail}</p>
-        )}
-      </div>
-
-      <div>
-        <label
-          htmlFor="notes"
-          className="mb-2 block font-semibold text-gold-200"
-        >
-          Notas adicionales (opcional)
-        </label>
-        <textarea
-          id="notes"
-          value={data.notes || ''}
-          onChange={(e) =>
-            handleChange('notes', e.target.value.slice(0, 500))
-          }
-          placeholder="Ej: Sin cebolla, tocar timbre 2 veces"
-          disabled={loading}
-          maxLength={500}
-          rows={3}
-          className={`${inputBase} resize-none border-gold-300/20`}
-        />
-        <p className="mt-1 text-xs text-white/50">
-          {(data.notes?.length ?? 0)}/500 caracteres
-        </p>
-      </div>
-
-      <Button
+      <button
         type="submit"
-        variant="primary"
-        className="w-full py-4 text-lg"
         disabled={isDisabled}
+        className="btn btn-gold h-[54px] w-full text-[14.5px]"
+        style={isDisabled ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
       >
         {loading ? (
           <>
-            <Loader2 className="size-5 animate-spin" />
-            Procesando compra...
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#2a1c08] border-t-transparent" />
+            Procesando…
           </>
         ) : (
-          'Finalizar compra'
+          <>
+            <Icon.lock style={{ width: 17, height: 17 }} /> Pagar {fmtPrice(total)}
+          </>
         )}
-      </Button>
+      </button>
+      <p className="-mt-3 text-center text-[11.5px] text-tan-dim">
+        El precio final se ajusta según el peso real de cada corte.
+      </p>
     </form>
+  );
+}
+
+function DesignField({
+  label,
+  icon,
+  type = 'text',
+  placeholder,
+  value,
+  onChange,
+  onBlur,
+  error,
+  disabled,
+}: {
+  label: string;
+  icon?: IconName;
+  type?: string;
+  placeholder?: string;
+  value: string;
+  onChange: (v: string) => void;
+  onBlur?: () => void;
+  error?: string;
+  disabled?: boolean;
+}) {
+  const I = icon ? Icon[icon] : null;
+  return (
+    <div className="field">
+      <span className="field-lbl">{label}</span>
+      <div
+        className="field-input"
+        style={error ? { boxShadow: 'inset 0 0 0 1.5px #d4796b' } : undefined}
+      >
+        {I && <I />}
+        <input
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
+        />
+      </div>
+      {error && <span className="text-[12px]" style={{ color: '#d4796b' }}>{error}</span>}
+    </div>
   );
 }

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { adminApi } from '@/lib/adminApi';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/Button';
+import { ImageUploader } from '@/components/ImageUploader';
 
 export interface CategoryOption {
   _id: string;
@@ -38,6 +39,36 @@ interface FormErrors {
   price?: string;
   stock?: string;
   category?: string;
+}
+
+interface NewCategoryErrors {
+  name?: string;
+  description?: string;
+}
+
+function mergeCategoryOptions(
+  fromProps: CategoryOption[],
+  local: CategoryOption[]
+): CategoryOption[] {
+  const ids = new Set(fromProps.map((c) => c._id));
+  return [
+    ...fromProps,
+    ...local.filter((c) => !ids.has(c._id)),
+  ];
+}
+
+function validateNewCategoryFields(
+  name: string,
+  description: string
+): NewCategoryErrors {
+  const errors: NewCategoryErrors = {};
+  const trimmed = name.trim();
+  if (!trimmed) errors.name = 'Nombre requerido';
+  else if (trimmed.length < 3) errors.name = 'Mínimo 3 caracteres';
+  else if (trimmed.length > 100) errors.name = 'Máximo 100 caracteres';
+  if (description.length > 500)
+    errors.description = 'Máximo 500 caracteres';
+  return errors;
 }
 
 const initialFormData: FormData = {
@@ -75,11 +106,36 @@ export function ProductFormModal({
   const [data, setData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [localCategories, setLocalCategories] = useState<CategoryOption[]>(
+    []
+  );
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [newCategoryErrors, setNewCategoryErrors] = useState<NewCategoryErrors>(
+    {}
+  );
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const prevIsOpenRef = useRef(false);
 
   const isEdit = !!product;
 
   useEffect(() => {
     if (isOpen) {
+      setImageUploading(false);
+      const justOpened = !prevIsOpenRef.current;
+      prevIsOpenRef.current = true;
+      if (justOpened) {
+        setLocalCategories([...categories]);
+        setShowCategoryForm(false);
+        setNewCategoryName('');
+        setNewCategoryDescription('');
+        setNewCategoryErrors({});
+        setCreatingCategory(false);
+      } else {
+        setLocalCategories((prev) => mergeCategoryOptions(categories, prev));
+      }
       if (product) {
         setData({
           name: product.name,
@@ -98,11 +154,55 @@ export function ProductFormModal({
         setData(initialFormData);
       }
       setErrors({});
+    } else {
+      prevIsOpenRef.current = false;
     }
-  }, [isOpen, product]);
+  }, [isOpen, product, categories]);
+
+  const handleCancelNewCategory = () => {
+    setShowCategoryForm(false);
+    setNewCategoryName('');
+    setNewCategoryDescription('');
+    setNewCategoryErrors({});
+  };
+
+  const handleCreateCategory = async () => {
+    const fieldErrors = validateNewCategoryFields(
+      newCategoryName,
+      newCategoryDescription
+    );
+    setNewCategoryErrors(fieldErrors);
+    if (Object.values(fieldErrors).some(Boolean)) return;
+
+    setCreatingCategory(true);
+    try {
+      const created = await adminApi.createCategory({
+        name: newCategoryName.trim(),
+        description: newCategoryDescription.trim() || undefined,
+      });
+      toast.success('Categoría creada');
+      setLocalCategories((prev) => {
+        if (prev.some((c) => c._id === created._id)) return prev;
+        return [...prev, { _id: created._id, name: created.name }];
+      });
+      setData((prev) => ({ ...prev, category: created._id }));
+      setErrors((prev) => ({ ...prev, category: undefined }));
+      setShowCategoryForm(false);
+      setNewCategoryName('');
+      setNewCategoryDescription('');
+      setNewCategoryErrors({});
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Error al crear categoría'
+      );
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (imageUploading || creatingCategory) return;
     const formErrors = validateForm(data, isEdit);
     setErrors(formErrors);
     if (Object.values(formErrors).some(Boolean)) return;
@@ -264,30 +364,19 @@ export function ProductFormModal({
 
               <div>
                 <label className="mb-2 block font-semibold text-gold-200">
-                  URL de imagen
+                  Imagen del producto
                 </label>
-                <input
-                  type="url"
+                <ImageUploader
                   value={data.imageUrl}
-                  onChange={(e) =>
-                    setData((prev) => ({ ...prev, imageUrl: e.target.value }))
+                  onUploadSuccess={(secureUrl) =>
+                    setData((prev) => ({ ...prev, imageUrl: secureUrl }))
                   }
-                  placeholder="https://..."
+                  onClear={() =>
+                    setData((prev) => ({ ...prev, imageUrl: '' }))
+                  }
+                  onUploadingChange={setImageUploading}
                   disabled={loading}
-                  className={`${inputBase} border-gold-300/20`}
                 />
-                {data.imageUrl && (
-                  <div className="mt-2">
-                    <img
-                      src={data.imageUrl}
-                      alt="Preview"
-                      className="h-24 w-24 rounded-lg object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
               </div>
 
               <div>
@@ -315,11 +404,11 @@ export function ProductFormModal({
                   onChange={(e) =>
                     setData((prev) => ({ ...prev, category: e.target.value }))
                   }
-                  disabled={loading}
+                  disabled={loading || creatingCategory}
                   className={`${inputBase} ${errors.category ? inputError : 'border-gold-300/20'}`}
                 >
                   <option value="">Seleccionar categoría</option>
-                  {categories.map((cat) => (
+                  {localCategories.map((cat) => (
                     <option key={cat._id} value={cat._id}>
                       {cat.name}
                     </option>
@@ -328,6 +417,115 @@ export function ProductFormModal({
                 {errors.category && (
                   <p className="mt-1 text-sm text-red-400">{errors.category}</p>
                 )}
+                {!showCategoryForm && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryForm(true)}
+                    disabled={loading || creatingCategory}
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-gold-300 transition-colors hover:text-gold-200 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <Plus className="size-4 shrink-0" aria-hidden />
+                    Crear nueva categoría
+                  </button>
+                )}
+                <AnimatePresence initial={false}>
+                  {showCategoryForm && (
+                    <motion.div
+                      key="inline-new-category"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 space-y-3 rounded-lg border border-gold-300/20 bg-dark-700/40 p-4">
+                        <div>
+                          <label className="mb-2 block text-sm font-semibold text-gold-200">
+                            Nombre de la categoría *
+                          </label>
+                          <input
+                            type="text"
+                            value={newCategoryName}
+                            onChange={(e) => {
+                              setNewCategoryName(e.target.value.slice(0, 100));
+                              if (newCategoryErrors.name) {
+                                setNewCategoryErrors((prev) => ({
+                                  ...prev,
+                                  name: undefined,
+                                }));
+                              }
+                            }}
+                            placeholder="Ej: Platos principales"
+                            maxLength={100}
+                            disabled={creatingCategory}
+                            className={`${inputBase} ${newCategoryErrors.name ? inputError : 'border-gold-300/20'}`}
+                          />
+                          {newCategoryErrors.name && (
+                            <p className="mt-1 text-sm text-red-400">
+                              {newCategoryErrors.name}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-sm font-semibold text-gold-200">
+                            Descripción
+                          </label>
+                          <textarea
+                            value={newCategoryDescription}
+                            onChange={(e) => {
+                              setNewCategoryDescription(
+                                e.target.value.slice(0, 500)
+                              );
+                              if (newCategoryErrors.description) {
+                                setNewCategoryErrors((prev) => ({
+                                  ...prev,
+                                  description: undefined,
+                                }));
+                              }
+                            }}
+                            placeholder="Opcional"
+                            rows={2}
+                            maxLength={500}
+                            disabled={creatingCategory}
+                            className={`${inputBase} resize-none ${newCategoryErrors.description ? inputError : 'border-gold-300/20'}`}
+                          />
+                          {newCategoryErrors.description && (
+                            <p className="mt-1 text-sm text-red-400">
+                              {newCategoryErrors.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="flex-1"
+                            onClick={handleCancelNewCategory}
+                            disabled={creatingCategory}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="primary"
+                            className="flex-1"
+                            onClick={handleCreateCategory}
+                            disabled={creatingCategory}
+                          >
+                            {creatingCategory ? (
+                              <>
+                                <Loader2 className="size-5 animate-spin" />
+                                Creando…
+                              </>
+                            ) : (
+                              'Crear'
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {isEdit && (
@@ -357,7 +555,7 @@ export function ProductFormModal({
                   variant="secondary"
                   onClick={onClose}
                   className="flex-1"
-                  disabled={loading}
+                  disabled={loading || creatingCategory}
                 >
                   Cancelar
                 </Button>
@@ -365,12 +563,17 @@ export function ProductFormModal({
                   type="submit"
                   variant="primary"
                   className="flex-1"
-                  disabled={loading}
+                  disabled={loading || imageUploading || creatingCategory}
                 >
                   {loading ? (
                     <>
                       <Loader2 className="size-5 animate-spin" />
                       Guardando...
+                    </>
+                  ) : imageUploading ? (
+                    <>
+                      <Loader2 className="size-5 animate-spin" />
+                      Subiendo imagen…
                     </>
                   ) : (
                     'Guardar'

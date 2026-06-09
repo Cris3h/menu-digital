@@ -1,22 +1,15 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
-import { AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
-import { api } from '@/lib/api';
-import type { Product } from '@/lib/types';
-import { formatPrice } from '@/lib/utils';
-import { CartItem } from '@/components/cart/CartItem';
-import { CartSummary } from '@/components/cart/CartSummary';
-import { EmptyCart } from '@/components/cart/EmptyCart';
-import { ProductModal } from '@/components/menu/ProductModal';
-import { PageTransition } from '@/components/layout/PageTransition';
-import { Button } from '@/components/ui/Button';
-import { Trash2 } from 'lucide-react';
+import { fmtPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
+import { Icon } from '@/components/ui/Icons';
+import { EmptyCart } from '@/components/cart/EmptyCart';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { PageTransition } from '@/components/layout/PageTransition';
 
 export default function CartPage() {
   const router = useRouter();
@@ -24,152 +17,121 @@ export default function CartPage() {
   const { items, updateQuantity, removeItem, getTotal, clearCart } =
     useCartStore();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [modalProductId, setModalProductId] = useState<string | null>(null);
 
   const total = getTotal();
-
-  const { data: product, isLoading: productLoading } = useSWR<Product | null>(
-    modalProductId ? ['product', modalProductId] : null,
-    async () => (modalProductId ? api.getProduct(modalProductId) : null),
-    { revalidateOnFocus: false }
-  );
-
-  const handleProceedToCheckout = () => {
-    router.push('/checkout');
-  };
-
-  const handleProductClick = useCallback((productId: string) => {
-    setModalProductId(productId);
-  }, []);
-
-  const handleRemove = useCallback(
-    (productId: string) => {
-      removeItem(productId);
-      toast.info('Producto eliminado');
-    },
-    [removeItem, toast]
-  );
-
-  const handleAddToCart = useCallback(
-    (p: Product, quantity: number) => {
-      useCartStore.getState().addItem({
-        productId: p._id,
-        name: p.name,
-        price: p.price,
-        quantity,
-        imageUrl: p.imageUrl || '',
-      });
-    },
-    []
-  );
-
-  const handleUpdateQuantity = useCallback(
-    (productId: string, quantity: number) => {
-      updateQuantity(productId, quantity);
-    },
-    [updateQuantity]
-  );
-
-  const cartItem = items.find((i) => i.productId === modalProductId);
-
-  const handleClearCart = useCallback(() => {
-    clearCart();
-    toast.info('Carrito vaciado');
-  }, [clearCart, toast]);
 
   if (items.length === 0) {
     return (
       <PageTransition>
-        <main className="min-h-screen bg-dark-900">
-          <EmptyCart />
-        </main>
+        <EmptyCart />
       </PageTransition>
     );
   }
 
+  const dec = (id: string, qty: number) =>
+    qty <= 1 ? removeItem(id) : updateQuantity(id, qty - 1);
+
   return (
     <PageTransition>
-      <main className="min-h-screen bg-dark-900 pb-32 md:pb-12">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-3xl font-bold text-gold-200">
-              Carrito de Compras
-            </h1>
-            <button
-              type="button"
-              onClick={() => setShowClearConfirm(true)}
-              className="flex items-center gap-2 rounded-lg border border-red-500/50 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/10"
-            >
-              <Trash2 className="size-4" />
-              Vaciar carrito
-            </button>
-          </div>
+      <div className="mx-auto max-w-[1100px] px-[20px] pb-12 pt-6 lg:px-8 lg:pt-10">
+        <div className="mb-5 flex items-center justify-between">
+          <h1 className="font-display text-[28px] text-cream lg:text-[40px]">
+            Tu carrito
+          </h1>
+          <button
+            onClick={() => setShowClearConfirm(true)}
+            className="flex items-center gap-1.5 text-[13px] font-semibold text-tan-dim transition-colors hover:text-gold"
+          >
+            <Icon.trash style={{ width: 16, height: 16 }} /> Vaciar
+          </button>
+        </div>
 
-          <div className="grid gap-8 lg:grid-cols-3">
-            <div className="space-y-4 lg:col-span-2">
-              <AnimatePresence mode="popLayout">
-                {items.map((item) => (
-                  <CartItem
-                    key={item.productId}
-                    item={item}
-                    onUpdateQuantity={updateQuantity}
-                    onRemove={handleRemove}
-                    onProductClick={handleProductClick}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-
-            <div className="hidden lg:block">
-              <div className="sticky top-24">
-                <CartSummary subtotal={total} total={total} />
-                <Button
-                  variant="primary"
-                  className="mt-6 w-full py-4 text-lg"
-                  onClick={handleProceedToCheckout}
-                >
-                  Proceder al checkout
-                </Button>
+        <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr] lg:items-start">
+          {/* Ítems */}
+          <div>
+            {items.map((it) => (
+              <div key={it.productId} className="cart-item">
+                <div className="thumb">
+                  {it.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={it.imageUrl} alt={it.name} />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[14px] font-bold text-cream">{it.name}</div>
+                  <div className="price mt-0.5" style={{ fontSize: 14 }}>
+                    {fmtPrice(it.price)}
+                    <span className="unit">/kg</span>
+                  </div>
+                </div>
+                <div className="qty-ctl">
+                  <button onClick={() => dec(it.productId, it.quantity)} aria-label="Quitar uno">
+                    −
+                  </button>
+                  <span className="tnum">{it.quantity}</span>
+                  <button
+                    onClick={() => updateQuantity(it.productId, it.quantity + 1)}
+                    aria-label="Agregar uno"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gold-300/20 bg-dark-900/95 p-4 backdrop-blur-sm lg:hidden">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-white/70">Total</p>
-              <p className="text-2xl font-bold text-gold-100">
-                {formatPrice(total)}
-              </p>
+          {/* Resumen */}
+          <div
+            className="rounded-[18px] p-6 lg:sticky lg:top-24"
+            style={{
+              background: 'linear-gradient(180deg,var(--panel),var(--card-b))',
+              boxShadow: 'inset 0 0 0 1px var(--line)',
+            }}
+          >
+            <h3 className="font-display mb-4 text-[22px] text-cream">Resumen</h3>
+            <div className="mb-2 flex justify-between text-[13.5px] text-tan">
+              <span>Subtotal</span>
+              <span className="tnum">{fmtPrice(total)}</span>
             </div>
-            <Button
-              variant="primary"
-              className="shrink-0 px-8 py-4"
-              onClick={handleProceedToCheckout}
+            <div className="mb-3.5 flex justify-between text-[13.5px] text-tan">
+              <span>Envío</span>
+              <span className="text-gold">A confirmar</span>
+            </div>
+            <div
+              className="mb-4 flex items-center justify-between pt-3.5"
+              style={{ boxShadow: 'inset 0 1px 0 var(--line)' }}
             >
-              Proceder al checkout
-            </Button>
+              <span className="eyebrow">Total estimado</span>
+              <span className="price" style={{ fontSize: 24 }}>
+                {fmtPrice(total)}
+              </span>
+            </div>
+            <button
+              onClick={() => router.push('/checkout')}
+              className="btn btn-gold h-[52px] w-full text-[14px]"
+            >
+              Continuar al checkout <Icon.arrowRight style={{ width: 17, height: 17 }} />
+            </button>
+            <p className="mt-2.5 text-center text-[11.5px] text-tan-dim">
+              El precio final se confirma según el peso de cada corte.
+            </p>
+            <Link
+              href="/menu"
+              className="mt-3 block text-center text-[13px] font-semibold text-gold transition-colors hover:text-gold-lite"
+            >
+              Seguir comprando
+            </Link>
           </div>
         </div>
-      </main>
-
-      <ProductModal
-        product={product ?? null}
-        isOpen={!!modalProductId}
-        isLoading={productLoading}
-        onClose={() => setModalProductId(null)}
-        onAddToCart={handleAddToCart}
-        onUpdateQuantity={handleUpdateQuantity}
-        onShowToast={toast.success}
-        mode="edit"
-        initialQuantity={cartItem?.quantity ?? 1}
-      />
+      </div>
 
       <ConfirmModal
         isOpen={showClearConfirm}
         onClose={() => setShowClearConfirm(false)}
-        onConfirm={handleClearCart}
+        onConfirm={() => {
+          clearCart();
+          toast.info('Carrito vaciado');
+        }}
         title="Vaciar carrito"
         message="¿Estás seguro de que querés vaciar el carrito?"
         confirmLabel="Vaciar"

@@ -11,6 +11,11 @@ import type {
   UpdateProductDto,
   CreateCategoryDto,
   UpdateCategoryDto,
+  OverviewResult,
+  DailyVisit,
+  PageVisit,
+  DeviceBreakdown,
+  EventSummary,
 } from './types';
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -73,6 +78,16 @@ export const adminApi = {
       method: 'DELETE',
     });
     return handleResponse<Product>(res);
+  },
+
+  reorderProducts: async (
+    items: { _id: string; displayOrder: number }[]
+  ) => {
+    const res = await authFetch(`${API_URL}/products/reorder`, {
+      method: 'PATCH',
+      body: JSON.stringify({ items }),
+    });
+    return handleResponse<{ success: boolean }>(res);
   },
 
   getAllCategories: async (params?: {
@@ -153,5 +168,35 @@ export const adminApi = {
       `${API_URL}/payments${query ? `?${query}` : ''}`
     );
     return handleResponse<PaginatedResponse<Payment>>(res);
+  },
+
+  getAnalyticsOverview: async (from: string, to: string) => {
+    const params = new URLSearchParams({ from, to });
+    const res = await authFetch(`${API_URL}/a/overview?${params}`);
+    return handleResponse<OverviewResult>(res);
+  },
+
+  getAnalyticsDaily: async (from: string, to: string) => {
+    const params = new URLSearchParams({ from, to });
+    const res = await authFetch(`${API_URL}/a/daily?${params}`);
+    return handleResponse<DailyVisit[]>(res);
+  },
+
+  getAnalyticsByPage: async (from: string, to: string) => {
+    const params = new URLSearchParams({ from, to });
+    const res = await authFetch(`${API_URL}/a/by-page?${params}`);
+    return handleResponse<PageVisit[]>(res);
+  },
+
+  getAnalyticsDevices: async (from: string, to: string) => {
+    const params = new URLSearchParams({ from, to });
+    const res = await authFetch(`${API_URL}/a/devices?${params}`);
+    return handleResponse<DeviceBreakdown[]>(res);
+  },
+
+  getAnalyticsEventsSummary: async (from: string, to: string) => {
+    const params = new URLSearchParams({ from, to });
+    const res = await authFetch(`${API_URL}/a/ev?${params}`);
+    return handleResponse<EventSummary[]>(res);
   },
 };

@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { api } from '@/lib/api';
 import type { CheckoutFormData } from '@/lib/types';
-import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
+import { Logo } from '@/components/ui/Logo';
+import { Icon } from '@/components/ui/Icons';
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -32,9 +33,7 @@ export default function CheckoutPage() {
         toast.error('El carrito está vacío');
         return;
       }
-
       setLoading(true);
-
       try {
         const address = data.notes
           ? [data.customerAddress, `Notas: ${data.notes}`]
@@ -46,16 +45,16 @@ export default function CheckoutPage() {
           customerName: data.customerName,
           customerPhone: data.customerPhone,
           customerAddress: address || undefined,
+          customerZipCode: data.customerZipCode || undefined,
           customerEmail: data.customerEmail,
-          items: items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
+          items: items.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
           })),
         });
 
         const { initPoint } = await api.createPaymentPreference(order._id);
-
-        // No limpiar el carrito aquí: se limpia solo en /payment/success cuando el pago se confirma
+        // El carrito se limpia en /payment/success cuando el pago se confirma.
         window.location.href = initPoint;
       } catch (err) {
         setLoading(false);
@@ -71,53 +70,51 @@ export default function CheckoutPage() {
     [items, toast]
   );
 
-  if (items.length === 0) {
-    return null;
-  }
+  if (items.length === 0) return null;
 
   return (
     <PageTransition>
-      <main className="min-h-screen bg-dark-900 pb-32 md:pb-12">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="mb-8 text-3xl font-bold text-gold-200">
-            Finalizar compra
+      {/* Header propio del checkout (reemplaza el global vía pantalla completa) */}
+      <header
+        className="flex items-center justify-between px-[20px] py-5 lg:px-14"
+        style={{ boxShadow: 'inset 0 -1px 0 var(--line)' }}
+      >
+        <Link href="/cart" aria-label="Volver al carrito">
+          <Logo className="scale-90 lg:scale-100" />
+        </Link>
+        <div
+          className="hidden items-center gap-2 rounded-full px-4 py-2 sm:inline-flex"
+          style={{
+            background: 'rgba(216,162,62,.12)',
+            boxShadow: 'inset 0 0 0 1px var(--line)',
+          }}
+        >
+          <Icon.flame style={{ width: 16, height: 16, color: 'var(--gold)' }} />
+          <span className="text-[12.5px] font-extrabold uppercase tracking-[0.1em] text-gold-lite">
+            Compra en 1 paso
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-tan-dim">
+          <Icon.lock style={{ width: 16, height: 16, color: 'var(--gold)' }} />
+          <span className="hidden sm:inline">Pago seguro</span>
+        </div>
+      </header>
+
+      <section className="mx-auto grid max-w-[1280px] grid-cols-1 items-start gap-9 px-[20px] py-9 lg:grid-cols-[1.5fr_1fr] lg:px-14 lg:pb-[52px]">
+        <div>
+          <h1 className="font-display mb-1.5 text-[26px] text-cream lg:text-[30px]">
+            Finalizá tu pedido
           </h1>
-
-          <div className="grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <div className="rounded-xl border border-gold-300/20 bg-dark-800 p-6">
-                <h2 className="mb-6 text-xl font-semibold text-gold-200">
-                  Datos de entrega
-                </h2>
-                <CheckoutForm onSubmit={handleSubmit} loading={loading} />
-              </div>
-            </div>
-
-            <div className="hidden lg:block">
-              <div className="sticky top-24">
-                <OrderSummary items={items} total={total} />
-              </div>
-            </div>
-          </div>
+          <p className="mb-6 text-[14.5px] text-tan-dim">
+            Completá tus datos y confirmá. Todo en una sola pantalla.
+          </p>
+          <CheckoutForm onSubmit={handleSubmit} loading={loading} total={total} />
         </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gold-300/20 bg-dark-900/95 p-4 backdrop-blur-sm lg:hidden">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-white/70">Total</p>
-              <p className="text-2xl font-bold text-gold-100">
-                {formatPrice(total)}
-              </p>
-            </div>
-            <Link
-              href="/cart"
-              className="shrink-0 text-sm font-medium text-gold-200 transition-colors hover:text-gold-100"
-            >
-              Ver carrito
-            </Link>
-          </div>
+        <div className="lg:sticky lg:top-6">
+          <OrderSummary items={items} total={total} />
         </div>
-      </main>
+      </section>
     </PageTransition>
   );
 }

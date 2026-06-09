@@ -407,7 +407,7 @@ export function ProductModal({
                             ? 'cursor-not-allowed bg-gray-700 text-gray-500'
                             : justAdded
                             ? 'bg-emerald-500 text-white'
-                            : 'bg-gradient-to-r from-gold-300 to-gold-400 text-dark-900 shadow-lg shadow-gold-300/25 hover:shadow-xl hover:shadow-gold-300/40'
+                            : 'bg-gold-300 text-dark-900 shadow-md shadow-gold-300/15 hover:bg-gold-200 hover:shadow-lg hover:shadow-gold-300/25'
                         }`}
                       >
                         {isEdit ? (
