@@ -85,4 +85,41 @@ export const NOSOTROS_STATS: [string, string][] = [
   ['4.9★', 'en reseñas'],
 ];
 
+export interface StatusMeta {
+  label: string;
+  color: string;
+  bg: string;
+}
+
+/** Meta visual de estados de pedido (alineado con OrderStatus del backend). */
+export const STATUS_META: Record<string, StatusMeta> = {
+  pending: { label: 'Pendiente', color: '#e0a93a', bg: 'rgba(224,169,58,.14)' },
+  paid: { label: 'Pagado', color: '#5bbd7a', bg: 'rgba(91,189,122,.14)' },
+  preparing: { label: 'En preparación', color: '#e0a93a', bg: 'rgba(224,169,58,.14)' },
+  delivered: { label: 'Entregado', color: '#8ea6c4', bg: 'rgba(142,166,196,.14)' },
+  cancelled: { label: 'Cancelado', color: '#d4796b', bg: 'rgba(212,121,107,.14)' },
+};
+
+export interface MyOrder {
+  id: string;
+  date: string;
+  items: string;
+  total: number;
+  status: string;
+}
+
+/** Pedidos de ejemplo para "Mis pedidos" (demo; sin backend de lookup aún). */
+export const MY_ORDERS: MyOrder[] = [
+  { id: '1042', date: 'Hoy · 12:48', items: 'Milanesa de ternera, Bife de chorizo, Asado tira', total: 32400, status: 'preparing' },
+  { id: '1021', date: '2 jun · 19:30', items: 'Vacío, Chorizos parrilleros', total: 18700, status: 'delivered' },
+  { id: '0998', date: '24 may · 11:15', items: 'Milanesa de pollo, Hamburguesas caseras', total: 17100, status: 'delivered' },
+];
+
+export const CONTACT_INFO = {
+  address: 'Av. San Martín 1234, Junín (B)',
+  hours: 'Lun a Sáb · 08–22 h · Dom cerrado',
+  instagram: '@miinuta.carnes',
+  email: 'hola@miinuta.com.ar',
+};
+
 export { IMG as unsplash };
