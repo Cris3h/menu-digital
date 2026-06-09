@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { MobileBottomNav } from './MobileBottomNav';
 
 export function ConditionalLayout({
   children,
@@ -21,6 +22,7 @@ export function ConditionalLayout({
       <Header />
       <div className="flex-1">{children}</div>
       <Footer />
+      <MobileBottomNav />
     </>
   );
 }

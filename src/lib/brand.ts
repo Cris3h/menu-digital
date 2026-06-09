@@ -1,0 +1,88 @@
+/* MIINUTA. CARNES — datos de marca estáticos (no provienen del backend).
+   Categorías destacadas, features, combos y contacto, portados del diseño. */
+import type { IconName } from '@/components/ui/Icons';
+
+export interface BrandCategory {
+  id: string;
+  label: string;
+  icon: IconName;
+}
+
+/** Categorías destacadas de la home (link al catálogo filtrado). */
+export const BRAND_CATEGORIES: BrandCategory[] = [
+  { id: 'cortes', label: 'Cortes', icon: 'steak' },
+  { id: 'milanesas', label: 'Milanesas', icon: 'mila' },
+  { id: 'congelados', label: 'Congelados', icon: 'snow' },
+  { id: 'delivery', label: 'Delivery', icon: 'truck' },
+];
+
+export interface BrandFeature {
+  icon: IconName;
+  title: string;
+  desc: string;
+}
+
+export const BRAND_FEATURES: BrandFeature[] = [
+  { icon: 'steak', title: 'Cortes seleccionados', desc: 'La mejor calidad en cada elección' },
+  { icon: 'cleaver', title: 'Elaboración diaria', desc: 'Milanesas frescas todos los días' },
+  { icon: 'snow', title: 'Productos congelados', desc: 'Conservá calidad y sabor' },
+  { icon: 'truck', title: 'Delivery a domicilio', desc: 'Rápido, seguro y confiable' },
+];
+
+export interface Combo {
+  id: string;
+  name: string;
+  serves: string;
+  price: number;
+  old: number;
+  img: string;
+  items: string[];
+}
+
+const IMG = (id: string, w = 800) =>
+  `https://images.unsplash.com/${id}?w=${w}&q=75&auto=format&fit=crop`;
+
+export const COMBOS: Combo[] = [
+  {
+    id: 'c-asado',
+    name: 'Combo Asado',
+    serves: '8 a 10 personas',
+    price: 48000,
+    old: 56000,
+    img: IMG('photo-1558030006-450675393462'),
+    items: ['2 kg de asado de tira', '1 kg de vacío', '6 chorizos parrilleros', '500 g de mollejas'],
+  },
+  {
+    id: 'c-milas',
+    name: 'Combo Milanesas',
+    serves: 'Familiar',
+    price: 22000,
+    old: 25500,
+    img: IMG('photo-1562967914-608f82629710'),
+    items: ['2 kg de milanesa de ternera', '1 kg de milanesa de pollo', '1 kg de papas bastón'],
+  },
+  {
+    id: 'c-premium',
+    name: 'Combo Parrilla Premium',
+    serves: '6 personas',
+    price: 59000,
+    old: 68000,
+    img: IMG('photo-1613454320437-0c228c8b1723'),
+    items: ['2 bifes de chorizo', '1 entraña', '500 g de mollejas', '4 chorizos'],
+  },
+];
+
+export const NOSOTROS_VALUES: { icon: IconName; t: string; d: string }[] = [
+  { icon: 'steak', t: 'Selección estricta', d: 'Trabajamos con proveedores de confianza y elegimos cada media res a mano.' },
+  { icon: 'cleaver', t: 'Oficio de carnicero', d: 'Cortes a pedido, como los hacía el abuelo. Nada de góndola.' },
+  { icon: 'truck', t: 'Del barrio a tu casa', d: 'Delivery propio en Junín. Lo que ves en el mostrador, llega fresco.' },
+];
+
+export const NOSOTROS_STATS: [string, string][] = [
+  ['+30', 'años en el barrio'],
+  ['15', 'cortes distintos'],
+  ['100%', 'elaboración propia'],
+  ['4.9★', 'en reseñas'],
+];
+
+export { IMG as unsplash };
