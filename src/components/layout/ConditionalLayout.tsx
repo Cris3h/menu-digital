@@ -11,9 +11,11 @@ export function ConditionalLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin');
+  // Rutas "bare": traen su propio chrome (admin) o un header propio (checkout).
+  const isBare =
+    pathname?.startsWith('/admin') || pathname === '/checkout';
 
-  if (isAdmin) {
+  if (isBare) {
     return <>{children}</>;
   }
 
