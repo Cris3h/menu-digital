@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { api } from '@/lib/api';
 import type { Product, PaginatedResponse } from '@/lib/types';
@@ -18,6 +19,7 @@ const HERO_CORTE = '/assets/hero-corte.png';
 const HERO_MILA = '/assets/hero-milanesas.png';
 
 export function HomeContent() {
+  const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
   const toast = useToast();
   const whatsappUrl = getWhatsAppUrl(WHATSAPP_NUMBER, WHATSAPP_MESSAGE);
@@ -142,7 +144,7 @@ export function HomeContent() {
             <ProductCard
               key={p._id}
               product={p}
-              onClick={() => {}}
+              onClick={() => router.push(`/producto/${p._id}`)}
               onAddToCart={(e) => {
                 e.stopPropagation();
                 handleAdd(p);

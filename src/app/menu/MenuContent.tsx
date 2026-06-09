@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { api } from '@/lib/api';
 import type { Product, Category, PaginatedResponse } from '@/lib/types';
@@ -13,13 +13,13 @@ import { Icon } from '@/components/ui/Icons';
 import { Price } from '@/components/ui/Price';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { ProductCardSkeleton } from '@/components/menu/ProductCardSkeleton';
-import { ProductModal } from '@/components/menu/ProductModal';
 import { ScrollToTop } from '@/components/menu/ScrollToTop';
 
 const ITEMS_PER_PAGE = 8;
 
 export function MenuContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const toast = useToast();
   const items = useCartStore((s) => s.items);
   const addItem = useCartStore((s) => s.addItem);
@@ -31,8 +31,6 @@ export function MenuContent() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     () => searchParams.get('category') ?? null
   );
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
@@ -101,10 +99,10 @@ export function MenuContent() {
     [toast]
   );
 
-  const handleCardClick = useCallback((product: Product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-  }, []);
+  const handleCardClick = useCallback(
+    (product: Product) => router.push(`/producto/${product._id}`),
+    [router]
+  );
 
   const handleAddFromCard = useCallback(
     (e: React.MouseEvent, product: Product) => {
@@ -275,15 +273,6 @@ export function MenuContent() {
           </>
         )}
       </section>
-
-      <ProductModal
-        product={selectedProduct}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAddToCart={handleAddToCart}
-        onShowToast={handleShowToast}
-        cartQuantity={selectedProduct ? getCartQuantity(selectedProduct._id) : 0}
-      />
 
       <ScrollToTop />
     </>

@@ -13,6 +13,7 @@ import { ProductSortModal } from '@/components/admin/ProductSortModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
 import { Select } from '@/components/ui/Select';
+import { AdminPageHeader } from '@/components/admin/AdminUI';
 import type { Product } from '@/lib/types';
 
 const LIMIT = 20;
@@ -135,34 +136,37 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold text-gold-200">Productos</h1>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleOpenSortModal}
-            disabled={sortModalLoading || isLoading}
-            className="border-gold-300/30"
-          >
-            {sortModalLoading ? (
-              <>
-                <Loader2 className="size-5 animate-spin" />
-                Cargando…
-              </>
-            ) : (
-              <>
-                <ArrowUpDown className="size-5" />
-                Ordenar
-              </>
-            )}
-          </Button>
-          <Button variant="primary" onClick={handleCreateClick}>
-            <Plus className="size-5" />
-            Nuevo Producto
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Productos"
+        subtitle={total > 0 ? `${total} productos` : undefined}
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleOpenSortModal}
+              disabled={sortModalLoading || isLoading}
+              className="border-gold-300/30"
+            >
+              {sortModalLoading ? (
+                <>
+                  <Loader2 className="size-5 animate-spin" />
+                  Cargando…
+                </>
+              ) : (
+                <>
+                  <ArrowUpDown className="size-5" />
+                  Ordenar
+                </>
+              )}
+            </Button>
+            <Button variant="primary" onClick={handleCreateClick}>
+              <Plus className="size-5" />
+              Nuevo Producto
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <AdminSearchBar
