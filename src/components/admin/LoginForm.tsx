@@ -2,21 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useToast } from '@/hooks/useToast';
 import { validateLoginForm, type LoginFormErrors } from '@/lib/validations';
-import { Button } from '@/components/ui/Button';
-
-const INITIAL_EMAIL = '';
-const INITIAL_PASSWORD = '';
+import { Icon } from '@/components/ui/Icons';
 
 export function LoginForm() {
   const router = useRouter();
   const toast = useToast();
-  const [email, setEmail] = useState(INITIAL_EMAIL);
-  const [password, setPassword] = useState(INITIAL_PASSWORD);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
@@ -44,7 +40,6 @@ export function LoginForm() {
     const newErrors = validateLoginForm({ email, password });
     setErrors(newErrors);
     setTouched({ email: true, password: true });
-
     if (Object.values(newErrors).some(Boolean)) return;
 
     setLoading(true);
@@ -60,75 +55,72 @@ export function LoginForm() {
     }
   };
 
-  const inputBase =
-    'w-full rounded-lg border bg-dark-700 px-4 py-3 text-white placeholder:text-white/40 focus:border-gold-300 focus:outline-none focus:ring-2 focus:ring-gold-300/50 transition-colors';
-  const inputError =
-    'border-red-400 focus:border-red-400 focus:ring-red-400/20';
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label
-          htmlFor="admin-email"
-          className="mb-2 block font-semibold text-gold-200"
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="field">
+        <span className="field-lbl">Email</span>
+        <div
+          className="field-input"
+          style={errors.email ? { boxShadow: 'inset 0 0 0 1.5px #d4796b' } : undefined}
         >
-          Email
-        </label>
-        <input
-          id="admin-email"
-          type="email"
-          value={email}
-          onChange={(e) => handleChange('email', e.target.value)}
-          onBlur={() => handleBlur('email')}
-          placeholder="admin@miinuta.com"
-          disabled={loading}
-          autoComplete="email"
-          className={`${inputBase} ${errors.email ? inputError : 'border-gold-300/20'}`}
-        />
+          <Icon.mail />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            onBlur={() => handleBlur('email')}
+            placeholder="admin@miinuta.com"
+            disabled={loading}
+            autoComplete="email"
+          />
+        </div>
         {errors.email && (
-          <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+          <span className="text-[12px]" style={{ color: '#d4796b' }}>
+            {errors.email}
+          </span>
         )}
       </div>
 
-      <div>
-        <label
-          htmlFor="admin-password"
-          className="mb-2 block font-semibold text-gold-200"
+      <div className="field">
+        <span className="field-lbl">Contraseña</span>
+        <div
+          className="field-input"
+          style={errors.password ? { boxShadow: 'inset 0 0 0 1.5px #d4796b' } : undefined}
         >
-          Contraseña
-        </label>
-        <input
-          id="admin-password"
-          type="password"
-          value={password}
-          onChange={(e) => handleChange('password', e.target.value)}
-          onBlur={() => handleBlur('password')}
-          placeholder="••••••••"
-          disabled={loading}
-          autoComplete="current-password"
-          minLength={6}
-          className={`${inputBase} ${errors.password ? inputError : 'border-gold-300/20'}`}
-        />
+          <Icon.lock />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => handleChange('password', e.target.value)}
+            onBlur={() => handleBlur('password')}
+            placeholder="••••••••"
+            disabled={loading}
+            autoComplete="current-password"
+            minLength={6}
+          />
+        </div>
         {errors.password && (
-          <p className="mt-1 text-sm text-red-400">{errors.password}</p>
+          <span className="text-[12px]" style={{ color: '#d4796b' }}>
+            {errors.password}
+          </span>
         )}
       </div>
 
-      <Button
+      <button
         type="submit"
-        variant="primary"
-        className="w-full py-4 text-lg"
         disabled={loading}
+        className="btn btn-gold mt-1 h-[52px] w-full text-[14px]"
+        style={loading ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
       >
         {loading ? (
           <>
-            <Loader2 className="size-5 animate-spin" />
-            Iniciando sesión...
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#2a1c08] border-t-transparent" />
+            Iniciando sesión…
           </>
         ) : (
-          'Iniciar sesión'
+          'Ingresar al panel'
         )}
-      </Button>
+      </button>
     </form>
   );
 }
