@@ -75,6 +75,11 @@ body {
   font-family: var(--font-manrope);
 }
 
+/* Clases de componentes en la capa `components` para que las utilidades de
+   Tailwind (hidden, lg:hidden, lg:grid, etc.) siempre tengan prioridad sobre
+   el `display` que setean estas clases. */
+@layer components {
+
 /* ---------- type helpers ---------- */
 .font-display {
   font-family: var(--font-anton);
@@ -1109,3 +1114,5 @@ body {
 .no-scrollbar {
   scrollbar-width: none;
 }
+
+} /* @layer components */

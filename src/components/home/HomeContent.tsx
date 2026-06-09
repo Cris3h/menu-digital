@@ -15,8 +15,11 @@ import { Price } from '@/components/ui/Price';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { PageTransition } from '@/components/layout/PageTransition';
 
-const HERO_CORTE = '/assets/hero-corte.png';
-const HERO_MILA = '/assets/hero-milanesas.png';
+// Servidas desde Cloudinary con optimización automática (formato + calidad + ancho).
+const HERO_CORTE =
+  'https://res.cloudinary.com/dmaciisvy/image/upload/f_auto,q_auto,w_900/v1781017854/ChatGPT_Image_9_jun_2026_09_44_38_pddsca.png';
+const HERO_MILA =
+  'https://res.cloudinary.com/dmaciisvy/image/upload/f_auto,q_auto,w_900/v1781017854/ChatGPT_Image_9_jun_2026_09_45_12_q0n8zb.png';
 
 export function HomeContent() {
   const router = useRouter();
@@ -45,19 +48,20 @@ export function HomeContent() {
     <PageTransition>
       {/* ============ HERO ============ */}
       <section className="hero relative overflow-hidden">
-        {/* fotos del hero (solo desktop, fundidas con mix-blend) */}
+        {/* fotos del hero, fundidas con mix-blend. En mobile asoman desde las
+            esquinas inferiores; en desktop flanquean el texto centrado. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={HERO_CORTE}
           alt="Corte de carne"
-          className="pointer-events-none absolute bottom-[-36px] left-[-28px] z-[3] hidden w-[35%] lg:block"
+          className="pointer-events-none absolute bottom-[-2%] left-[-16%] z-[3] w-[52%] lg:bottom-[-36px] lg:left-[-28px] lg:w-[35%]"
           style={{ mixBlendMode: 'lighten', filter: 'drop-shadow(0 24px 44px rgba(0,0,0,.55))' }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={HERO_MILA}
           alt="Milanesas"
-          className="pointer-events-none absolute bottom-[-12px] right-[-24px] z-[3] hidden w-[34%] lg:block"
+          className="pointer-events-none absolute bottom-[1%] right-[-14%] z-[3] w-[52%] lg:bottom-[-12px] lg:right-[-24px] lg:w-[34%]"
           style={{ mixBlendMode: 'lighten', filter: 'drop-shadow(0 24px 44px rgba(0,0,0,.55))' }}
         />
         <div className="hero-grain z-[2]" />
@@ -96,15 +100,15 @@ export function HomeContent() {
           </div>
 
           {/* chips de categoría (solo mobile) */}
-          <div className="m-cats mt-[10px] w-full lg:hidden">
+          <div className="mt-[10px] grid w-full grid-cols-4 gap-2 lg:hidden">
             {BRAND_CATEGORIES.map((c) => {
               const I = Icon[c.icon];
               return (
-                <Link key={c.id} href="/menu" className="m-cat">
+                <Link key={c.id} href="/menu" className="m-cat min-w-0">
                   <div className="ring">
                     <I />
                   </div>
-                  <span className="cl">{c.label}</span>
+                  <span className="cl max-w-full truncate">{c.label}</span>
                 </Link>
               );
             })}

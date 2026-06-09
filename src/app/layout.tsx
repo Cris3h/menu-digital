@@ -54,8 +54,8 @@ export const metadata: Metadata = {
       {
         url: SITE_LANDING_IMAGE_URL,
         width: 1200,
-        height: 630,
-        alt: `${SITE_NAME} — milanesa artesanal`,
+        height: 1200,
+        alt: `${SITE_NAME} — Carnes y milanesas`,
       },
     ],
   },

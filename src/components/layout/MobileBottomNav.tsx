@@ -22,6 +22,10 @@ export function MobileBottomNav() {
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
 
+  // El detalle de producto tiene su propia barra fija de "Agregar": ocultamos
+  // la tab bar para que no se solapen.
+  if (pathname.startsWith('/producto')) return null;
+
   return (
     <nav className="m-tabs sticky bottom-0 z-40 lg:hidden" aria-label="Navegación inferior">
       {TABS.map(({ id, label, icon: I, href }) => (
