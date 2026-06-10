@@ -1,14 +1,8 @@
 function getUploadPreset(): string {
-  const fromViteMeta =
-    typeof import.meta !== 'undefined' &&
-    'env' in import.meta &&
-    (
-      import.meta as ImportMeta & {
-        env?: { NEXT_CLOUDINARY_UPLOAD_PRESET?: string };
-      }
-    ).env?.NEXT_CLOUDINARY_UPLOAD_PRESET;
-  const fromProcess = process.env.NEXT_CLOUDINARY_UPLOAD_PRESET || '';
-  return fromViteMeta || fromProcess;
+  // En Next la variable se inyecta vía next.config (`env`), accesible por
+  // process.env tanto en server como en cliente. (Antes había un acceso estilo
+  // Vite a `import.meta.env` que webpack marcaba como "critical dependency".)
+  return process.env.NEXT_CLOUDINARY_UPLOAD_PRESET || '';
 }
 
 export async function uploadToCloudinary(file: File): Promise<string> {

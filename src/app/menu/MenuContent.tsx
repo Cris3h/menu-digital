@@ -14,6 +14,7 @@ import { Price } from '@/components/ui/Price';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { ProductCardSkeleton } from '@/components/menu/ProductCardSkeleton';
 import { ScrollToTop } from '@/components/menu/ScrollToTop';
+import { buildCartItem, productDisplayPrice, productKind } from '@/lib/product';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -83,13 +84,7 @@ export function MenuContent() {
   const handleAddToCart = useCallback(
     (product: Product, quantity: number) => {
       if (product.stock <= 0) return;
-      addItem({
-        productId: product._id,
-        name: product.name,
-        price: product.price,
-        quantity,
-        imageUrl: product.imageUrl || '',
-      });
+      addItem(buildCartItem(product, quantity));
     },
     [addItem]
   );
@@ -223,7 +218,11 @@ export function MenuContent() {
                       </div>
                       <div className="info">
                         <div className="rname">{product.name}</div>
-                        <Price value={product.price} style={{ fontSize: 15 }} />
+                        <Price
+                          value={productDisplayPrice(product)}
+                          unit={productKind(product) === 'loose'}
+                          style={{ fontSize: 15 }}
+                        />
                       </div>
                       <button
                         className="add-btn"

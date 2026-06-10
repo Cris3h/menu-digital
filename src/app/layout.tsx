@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Anton, Zilla_Slab, Manrope } from 'next/font/google';
 import './globals.css';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
+import { SettingsProvider } from '@/components/layout/SettingsProvider';
 import { AnalyticsTracker } from '@/components/layout/AnalyticsTracker';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { SITE_LANDING_IMAGE_URL, SITE_NAME } from '@/lib/constants';
@@ -77,7 +78,9 @@ export default function RootLayout({
       <body
         className={`${anton.variable} ${zillaSlab.variable} ${manrope.variable} flex min-h-screen flex-col antialiased`}
       >
-        <ConditionalLayout>{children}</ConditionalLayout>
+        <SettingsProvider>
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </SettingsProvider>
         <AnalyticsTracker />
         <ToastContainer />
       </body>

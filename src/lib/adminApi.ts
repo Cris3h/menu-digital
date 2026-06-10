@@ -1,5 +1,6 @@
 import { authFetch } from './auth';
 import { API_URL } from './constants';
+import type { Settings } from './settings';
 import type {
   Product,
   Category,
@@ -37,6 +38,20 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export const adminApi = {
+  // ---- Settings (configuración del negocio) ----
+  getSettings: async () => {
+    const res = await authFetch(`${API_URL}/settings`);
+    return handleResponse<Settings>(res);
+  },
+  updateSettings: async (data: Partial<Settings>) => {
+    const res = await authFetch(`${API_URL}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Settings>(res);
+  },
+
   getAllProducts: async (params?: {
     page?: number;
     limit?: number;

@@ -15,6 +15,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin/products', label: 'Productos', icon: 'box' },
   { href: '/admin/categories', label: 'Categorías', icon: 'grid' },
   { href: '/admin/analytics', label: 'Analíticas', icon: 'dollar' },
+  { href: '/admin/settings', label: 'Configuración', icon: 'settings' },
 ];
 
 export function AdminSidebar() {

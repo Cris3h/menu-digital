@@ -1,14 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
 import { Icon } from '@/components/ui/Icons';
 import { getWhatsAppUrl } from '@/lib/utils';
-import {
-  WHATSAPP_NUMBER,
-  WHATSAPP_MESSAGE,
-  CONTACT_PHONE,
-  DELIVERY_ZONE,
-  BUSINESS_HOURS,
-} from '@/lib/constants';
+import { useSettings } from './SettingsProvider';
 
 const COLS: [string, { label: string; href: string }[]][] = [
   [
@@ -39,7 +35,11 @@ const COLS: [string, { label: string; href: string }[]][] = [
 ];
 
 export function Footer() {
-  const whatsappUrl = getWhatsAppUrl(WHATSAPP_NUMBER, WHATSAPP_MESSAGE);
+  const settings = useSettings();
+  const whatsappUrl = getWhatsAppUrl(
+    settings.whatsappNumber,
+    settings.whatsappMessage
+  );
 
   return (
     <footer className="mt-2 hidden border-t border-[var(--line)] px-8 pt-[46px] lg:block">
@@ -98,15 +98,15 @@ export function Footer() {
           <div className="flex flex-col gap-[11px] text-[13.5px] text-tan">
             <span className="flex items-center gap-[9px]">
               <Icon.mapPin style={{ width: 15, height: 15, color: 'var(--gold)' }} />{' '}
-              {DELIVERY_ZONE}
+              {settings.deliveryZone}
             </span>
             <span className="flex items-center gap-[9px]">
               <Icon.phone style={{ width: 15, height: 15, color: 'var(--gold)' }} />{' '}
-              {CONTACT_PHONE}
+              {settings.phone}
             </span>
             <span className="flex items-center gap-[9px]">
               <Icon.clock style={{ width: 15, height: 15, color: 'var(--gold)' }} />{' '}
-              {BUSINESS_HOURS}
+              {settings.hours}
             </span>
           </div>
         </div>
