@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import useSWR from 'swr';
@@ -8,7 +8,14 @@ import { api } from '@/lib/api';
 import type { Product, PaginatedResponse } from '@/lib/types';
 import { useCartStore } from '@/store/cart';
 import { useToast } from '@/hooks/useToast';
-import { fmtPrice } from '@/lib/utils';
+import { fmtPrice, cn } from '@/lib/utils';
+import {
+  buildCartItem,
+  productKind,
+  productDisplayPrice,
+  looseStep,
+  looseMin,
+} from '@/lib/product';
 import { Icon, type IconName } from '@/components/ui/Icons';
 import { Price } from '@/components/ui/Price';
 import { ProductCard } from '@/components/menu/ProductCard';
@@ -20,12 +27,84 @@ const PERKS: [IconName, string, string][] = [
   ['check', 'Calidad garantizada', 'O te devolvemos'],
 ];
 
+/** Control de cantidad (unidades) o peso (kg) según el tipo de venta. */
+function AmountControl({
+  loose,
+  qty,
+  setQty,
+  weight,
+  setWeight,
+  step,
+  min,
+  big,
+}: {
+  loose: boolean;
+  qty: number;
+  setQty: React.Dispatch<React.SetStateAction<number>>;
+  weight: number;
+  setWeight: React.Dispatch<React.SetStateAction<number>>;
+  step: number;
+  min: number;
+  big?: boolean;
+}) {
+  const bs = big ? '!h-9 !w-9' : '!h-8 !w-8';
+  if (loose) {
+    return (
+      <div
+        className={cn('qty-ctl rounded-[12px] px-1.5', big ? 'h-[54px]' : 'h-[52px]')}
+        style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}
+      >
+        <button
+          className={bs}
+          onClick={() => setWeight((w) => Math.max(min, +(w - step).toFixed(2)))}
+          aria-label="Menos peso"
+        >
+          −
+        </button>
+        <input
+          type="number"
+          step={step}
+          min={min}
+          value={weight}
+          onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+          onBlur={() => setWeight((w) => Math.max(min, +(w || min).toFixed(2)))}
+          className="tnum w-[52px] bg-transparent text-center text-[15px] text-cream outline-none"
+          aria-label="Peso en kg"
+        />
+        <span className="pr-1 text-[13px] text-tan-dim">kg</span>
+        <button
+          className={bs}
+          onClick={() => setWeight((w) => +(w + step).toFixed(2))}
+          aria-label="Más peso"
+        >
+          +
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div
+      className={cn('qty-ctl rounded-[12px] px-2', big ? 'h-[54px]' : 'h-[52px]')}
+      style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}
+    >
+      <button className={bs} onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Menos">
+        −
+      </button>
+      <span className="tnum min-w-[36px] text-[15px]">{qty}</span>
+      <button className={bs} onClick={() => setQty((q) => q + 1)} aria-label="Más">
+        +
+      </button>
+    </div>
+  );
+}
+
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const toast = useToast();
   const addItem = useCartStore((s) => s.addItem);
   const [qty, setQty] = useState(1);
+  const [weight, setWeight] = useState(0.5);
 
   const { data: product, isLoading } = useSWR<Product>(
     id ? ['product', id] : null,
@@ -36,12 +115,15 @@ export default function ProductDetailPage() {
   const { data: related } = useSWR<PaginatedResponse<Product>>(
     product ? ['related', product.category?._id] : null,
     () =>
-      api.getProducts({
-        page: 1,
-        limit: 5,
-        categoryId: product?.category?._id,
-      })
+      api.getProducts({ page: 1, limit: 5, categoryId: product?.category?._id })
   );
+
+  // Cuando carga un producto de peso a elección, arranca en su peso mínimo.
+  useEffect(() => {
+    if (product && productKind(product) === 'loose') {
+      setWeight(looseMin(product));
+    }
+  }, [product]);
 
   if (isLoading) {
     return (
@@ -67,17 +149,48 @@ export default function ProductDetailPage() {
     .slice(0, 4);
   const outOfStock = product.stock <= 0;
 
+  const kind = productKind(product);
+  const isLoose = kind === 'loose';
+  const step = looseStep(product);
+  const min = looseMin(product);
+  const effWeight = Math.max(min, +weight.toFixed(2));
+
+  const previewTotal =
+    kind === 'unit'
+      ? product.price * qty
+      : kind === 'fixed'
+        ? product.price * (product.unitWeightKg ?? 0) * qty
+        : product.price * effWeight;
+
   const handleAdd = () => {
     if (outOfStock) return;
-    addItem({
-      productId: product._id,
-      name: product.name,
-      price: product.price,
-      quantity: qty,
-      imageUrl: product.imageUrl || '',
-    });
+    addItem(buildCartItem(product, qty, effWeight));
     toast.success('Producto agregado al carrito');
   };
+
+  const addControl = (big: boolean) => (
+    <>
+      <AmountControl
+        loose={isLoose}
+        qty={qty}
+        setQty={setQty}
+        weight={weight}
+        setWeight={setWeight}
+        step={step}
+        min={min}
+        big={big}
+      />
+      <button
+        onClick={handleAdd}
+        disabled={outOfStock}
+        className={cn('btn btn-gold flex-1', big ? 'h-[54px] text-[14.5px]' : 'h-[52px] text-[13.5px]')}
+        style={outOfStock ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+      >
+        <Icon.bag style={{ width: 18, height: 18 }} />{' '}
+        {outOfStock ? 'Sin stock' : `Agregar · ${fmtPrice(previewTotal)}`}
+      </button>
+    </>
+  );
 
   return (
     <PageTransition>
@@ -127,9 +240,18 @@ export default function ProductDetailPage() {
               </span>
               <span className="text-[13.5px] text-tan-dim">4.9 · 128 reseñas</span>
             </div>
-            <div className="mb-[22px] flex items-baseline gap-2.5">
-              <Price value={product.price} unit={false} className="!text-[38px]" />
-              <span className="text-[15px] text-tan-dim">por kg</span>
+            <div className="mb-[22px] flex flex-wrap items-baseline gap-2.5">
+              <Price
+                value={productDisplayPrice(product)}
+                unit={isLoose}
+                className="!text-[38px]"
+              />
+              {isLoose && <span className="text-[15px] text-tan-dim">por kg</span>}
+              {kind === 'fixed' && product.unitWeightKg && (
+                <span className="text-[14px] text-tan-dim">
+                  ≈ {product.unitWeightKg} kg · {fmtPrice(product.price)}/kg
+                </span>
+              )}
             </div>
             {product.description && (
               <p className="mb-6 text-[15px] leading-[1.65] text-tan">
@@ -137,30 +259,13 @@ export default function ProductDetailPage() {
               </p>
             )}
 
-            {/* Cantidad + agregar (desktop) */}
-            <div className="mb-[18px] hidden gap-3.5 lg:flex">
-              <div
-                className="qty-ctl h-[54px] rounded-[12px] px-2"
-                style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}
-              >
-                <button className="!h-9 !w-9" onClick={() => setQty((q) => Math.max(1, q - 1))}>
-                  −
-                </button>
-                <span className="tnum min-w-[40px] text-[17px]">{qty} kg</span>
-                <button className="!h-9 !w-9" onClick={() => setQty((q) => q + 1)}>
-                  +
-                </button>
-              </div>
-              <button
-                onClick={handleAdd}
-                disabled={outOfStock}
-                className="btn btn-gold h-[54px] flex-1 text-[14.5px]"
-                style={outOfStock ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-              >
-                <Icon.bag style={{ width: 18, height: 18 }} />{' '}
-                {outOfStock ? 'Sin stock' : `Agregar · ${fmtPrice(product.price * qty)}`}
-              </button>
-            </div>
+            {/* Cantidad/peso + agregar (desktop) */}
+            <div className="mb-2 hidden gap-3.5 lg:flex">{addControl(true)}</div>
+            {isLoose && (
+              <p className="mb-[18px] hidden text-[12px] text-tan-dim lg:block">
+                Elegí los kilos (de a {step} kg). El total se calcula solo.
+              </p>
+            )}
 
             {/* Perks */}
             <div
@@ -200,13 +305,7 @@ export default function ProductDetailPage() {
                   onAddToCart={(e) => {
                     e.stopPropagation();
                     if (r.stock <= 0) return;
-                    addItem({
-                      productId: r._id,
-                      name: r.name,
-                      price: r.price,
-                      quantity: 1,
-                      imageUrl: r.imageUrl || '',
-                    });
+                    addItem(buildCartItem(r));
                     toast.success('Producto agregado al carrito');
                   }}
                 />
@@ -221,27 +320,7 @@ export default function ProductDetailPage() {
         className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3.5 px-5 py-3.5 lg:hidden"
         style={{ background: 'var(--bg)', boxShadow: 'inset 0 1px 0 var(--line)' }}
       >
-        <div
-          className="qty-ctl h-[52px] rounded-[12px] px-1.5"
-          style={{ boxShadow: 'inset 0 0 0 1px var(--line)' }}
-        >
-          <button className="!h-8 !w-8" onClick={() => setQty((q) => Math.max(1, q - 1))}>
-            −
-          </button>
-          <span className="tnum min-w-[38px] text-[15px]">{qty} kg</span>
-          <button className="!h-8 !w-8" onClick={() => setQty((q) => q + 1)}>
-            +
-          </button>
-        </div>
-        <button
-          onClick={handleAdd}
-          disabled={outOfStock}
-          className="btn btn-gold h-[52px] flex-1 text-[13.5px]"
-          style={outOfStock ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-        >
-          <Icon.bag style={{ width: 17, height: 17 }} />{' '}
-          {outOfStock ? 'Sin stock' : `Agregar · ${fmtPrice(product.price * qty)}`}
-        </button>
+        {addControl(false)}
       </div>
     </PageTransition>
   );

@@ -5,6 +5,7 @@ import type {
   Category,
   Order,
   LoginResponse,
+  CreateOrderPayload,
 } from './types';
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -59,14 +60,7 @@ export const api = {
   },
 
   // Orders
-  createOrder: async (orderData: {
-    customerName: string;
-    customerPhone: string;
-    customerAddress?: string;
-    customerZipCode?: string;
-    customerEmail?: string;
-    items: { productId: string; quantity: number }[];
-  }) => {
+  createOrder: async (orderData: CreateOrderPayload) => {
     const res = await fetch(`${API_URL}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

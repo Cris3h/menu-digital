@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { api } from '@/lib/api';
-import type { CheckoutFormData } from '@/lib/types';
+import type { CheckoutFormData, DeliveryMethod } from '@/lib/types';
 import { useToast } from '@/hooks/useToast';
 import { Logo } from '@/components/ui/Logo';
 import { Icon } from '@/components/ui/Icons';
@@ -18,6 +18,7 @@ export default function CheckoutPage() {
   const toast = useToast();
   const { items, getTotal } = useCartStore();
   const [loading, setLoading] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('delivery');
 
   const total = getTotal();
 
@@ -47,9 +48,11 @@ export default function CheckoutPage() {
           customerAddress: address || undefined,
           customerZipCode: data.customerZipCode || undefined,
           customerEmail: data.customerEmail,
+          deliveryMethod: data.deliveryMethod,
           items: items.map((i) => ({
             productId: i.productId,
             quantity: i.quantity,
+            weightKg: i.weightKg,
           })),
         });
 
@@ -108,11 +111,17 @@ export default function CheckoutPage() {
           <p className="mb-6 text-[14.5px] text-tan-dim">
             Completá tus datos y confirmá. Todo en una sola pantalla.
           </p>
-          <CheckoutForm onSubmit={handleSubmit} loading={loading} total={total} />
+          <CheckoutForm
+            onSubmit={handleSubmit}
+            loading={loading}
+            total={total}
+            deliveryMethod={deliveryMethod}
+            onDeliveryMethodChange={setDeliveryMethod}
+          />
         </div>
 
         <div className="lg:sticky lg:top-6">
-          <OrderSummary items={items} total={total} />
+          <OrderSummary items={items} total={total} deliveryMethod={deliveryMethod} />
         </div>
       </section>
     </PageTransition>

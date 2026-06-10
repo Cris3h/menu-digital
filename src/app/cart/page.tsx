@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCartStore } from '@/store/cart';
+import { useCartStore, cartLineTotal } from '@/store/cart';
 import { fmtPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
 import { Icon } from '@/components/ui/Icons';
@@ -14,7 +14,7 @@ import { PageTransition } from '@/components/layout/PageTransition';
 export default function CartPage() {
   const router = useRouter();
   const toast = useToast();
-  const { items, updateQuantity, removeItem, getTotal, clearCart } =
+  const { items, updateQuantity, updateWeight, removeItem, getTotal, clearCart } =
     useCartStore();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -49,35 +49,80 @@ export default function CartPage() {
         <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr] lg:items-start">
           {/* Ítems */}
           <div>
-            {items.map((it) => (
-              <div key={it.productId} className="cart-item">
-                <div className="thumb">
-                  {it.imageUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={it.imageUrl} alt={it.name} />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-bold text-cream">{it.name}</div>
-                  <div className="price mt-0.5" style={{ fontSize: 14 }}>
-                    {fmtPrice(it.price)}
-                    <span className="unit">/kg</span>
+            {items.map((it) => {
+              const kind = it.kind ?? 'unit';
+              const isLoose = kind === 'loose';
+              const lineTotal = cartLineTotal(it);
+              return (
+                <div key={it.productId} className="cart-item">
+                  <div className="thumb">
+                    {it.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={it.imageUrl} alt={it.name} />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-bold text-cream">{it.name}</div>
+                    <div className="mt-0.5 text-[12px] text-tan-dim">
+                      {kind === 'unit'
+                        ? `${fmtPrice(it.price)} c/u`
+                        : `${fmtPrice(it.price)}/kg${
+                            it.weightKg
+                              ? ` · ${it.weightKg} kg${kind === 'fixed' ? ' c/u' : ''}`
+                              : ''
+                          }`}
+                    </div>
+                    <div className="price mt-0.5" style={{ fontSize: 15 }}>
+                      {fmtPrice(lineTotal)}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    {isLoose ? (
+                      <div className="qty-ctl">
+                        <button
+                          onClick={() =>
+                            (it.weightKg ?? 0) > 0.5
+                              ? updateWeight(it.productId, +((it.weightKg ?? 0) - 0.5).toFixed(2))
+                              : removeItem(it.productId)
+                          }
+                          aria-label="Menos peso"
+                        >
+                          −
+                        </button>
+                        <span className="tnum">{it.weightKg ?? 0}kg</span>
+                        <button
+                          onClick={() =>
+                            updateWeight(it.productId, +((it.weightKg ?? 0) + 0.5).toFixed(2))
+                          }
+                          aria-label="Más peso"
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="qty-ctl">
+                        <button onClick={() => dec(it.productId, it.quantity)} aria-label="Quitar uno">
+                          −
+                        </button>
+                        <span className="tnum">{it.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(it.productId, it.quantity + 1)}
+                          aria-label="Agregar uno"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => removeItem(it.productId)}
+                      className="text-[11px] text-tan-dim transition-colors hover:text-gold"
+                    >
+                      Quitar
+                    </button>
                   </div>
                 </div>
-                <div className="qty-ctl">
-                  <button onClick={() => dec(it.productId, it.quantity)} aria-label="Quitar uno">
-                    −
-                  </button>
-                  <span className="tnum">{it.quantity}</span>
-                  <button
-                    onClick={() => updateQuantity(it.productId, it.quantity + 1)}
-                    aria-label="Agregar uno"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Resumen */}

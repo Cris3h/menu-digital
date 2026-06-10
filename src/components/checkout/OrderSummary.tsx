@@ -1,14 +1,24 @@
 'use client';
 
-import type { CartItem } from '@/store/cart';
+import { cartLineTotal, type CartItem } from '@/store/cart';
+import type { DeliveryMethod } from '@/lib/types';
 import { fmtPrice } from '@/lib/utils';
+
+function itemLabel(item: CartItem): string {
+  const kind = item.kind ?? 'unit';
+  if (kind === 'unit') return `${item.quantity} u.`;
+  if (kind === 'fixed') return `${item.quantity} × ${item.weightKg ?? 0} kg`;
+  return `${item.weightKg ?? 0} kg`;
+}
 
 interface OrderSummaryProps {
   items: CartItem[];
   total: number;
+  deliveryMethod?: DeliveryMethod;
 }
 
-export function OrderSummary({ items, total }: OrderSummaryProps) {
+export function OrderSummary({ items, total, deliveryMethod = 'delivery' }: OrderSummaryProps) {
+  const isPickup = deliveryMethod === 'pickup';
   return (
     <div
       className="rounded-[18px] p-6"
@@ -37,10 +47,10 @@ export function OrderSummary({ items, total }: OrderSummaryProps) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[13.5px] font-bold text-cream">{item.name}</div>
-              <div className="text-[12px] text-tan-dim">{item.quantity} kg</div>
+              <div className="text-[12px] text-tan-dim">{itemLabel(item)}</div>
             </div>
             <span className="tnum text-[14px] font-extrabold text-tan">
-              {fmtPrice(item.price * item.quantity)}
+              {fmtPrice(cartLineTotal(item))}
             </span>
           </div>
         ))}
@@ -51,8 +61,8 @@ export function OrderSummary({ items, total }: OrderSummaryProps) {
           <span className="tnum">{fmtPrice(total)}</span>
         </div>
         <div className="flex justify-between text-[13.5px] text-tan">
-          <span>Envío</span>
-          <span className="text-gold">A confirmar</span>
+          <span>{isPickup ? 'Retiro en el local' : 'Envío'}</span>
+          <span className="text-gold">{isPickup ? 'Gratis' : 'A confirmar'}</span>
         </div>
       </div>
       <div

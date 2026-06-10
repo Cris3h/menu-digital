@@ -8,11 +8,12 @@ import type { Product, PaginatedResponse } from '@/lib/types';
 import { useCartStore } from '@/store/cart';
 import { useToast } from '@/hooks/useToast';
 import { getWhatsAppUrl } from '@/lib/utils';
-import { WHATSAPP_NUMBER, WHATSAPP_MESSAGE } from '@/lib/constants';
 import { BRAND_CATEGORIES, BRAND_FEATURES } from '@/lib/brand';
+import { useSettings } from '@/components/layout/SettingsProvider';
 import { Icon } from '@/components/ui/Icons';
 import { Price } from '@/components/ui/Price';
 import { ProductCard } from '@/components/menu/ProductCard';
+import { buildCartItem, productDisplayPrice, productKind } from '@/lib/product';
 import { PageTransition } from '@/components/layout/PageTransition';
 
 // Servidas desde Cloudinary con optimización automática (formato + calidad + ancho).
@@ -25,7 +26,11 @@ export function HomeContent() {
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
   const toast = useToast();
-  const whatsappUrl = getWhatsAppUrl(WHATSAPP_NUMBER, WHATSAPP_MESSAGE);
+  const settings = useSettings();
+  const whatsappUrl = getWhatsAppUrl(
+    settings.whatsappNumber,
+    settings.whatsappMessage
+  );
 
   const { data } = useSWR<PaginatedResponse<Product>>('home-featured', () =>
     api.getProducts({ page: 1, limit: 3 })
@@ -34,13 +39,7 @@ export function HomeContent() {
 
   const handleAdd = (p: Product) => {
     if (p.stock <= 0) return;
-    addItem({
-      productId: p._id,
-      name: p.name,
-      price: p.price,
-      quantity: 1,
-      imageUrl: p.imageUrl || '',
-    });
+    addItem(buildCartItem(p));
     toast.success('Producto agregado al carrito');
   };
 
@@ -174,7 +173,11 @@ export function HomeContent() {
                 <div className="my-[3px] text-[15px] font-bold text-cream">
                   {p.name}
                 </div>
-                <Price value={p.price} style={{ fontSize: 18 }} />
+                <Price
+                  value={productDisplayPrice(p)}
+                  unit={productKind(p) === 'loose'}
+                  style={{ fontSize: 18 }}
+                />
               </div>
               <button
                 className="add-btn"

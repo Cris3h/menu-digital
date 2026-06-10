@@ -3,6 +3,8 @@
 import { Icon } from '@/components/ui/Icons';
 import { Price } from '@/components/ui/Price';
 import type { Product } from '@/lib/types';
+import { fmtPrice } from '@/lib/utils';
+import { productKind, productDisplayPrice } from '@/lib/product';
 
 interface ProductCardProps {
   product: Product;
@@ -22,6 +24,7 @@ export function ProductCard({
   cartQuantity = 0,
 }: ProductCardProps) {
   const outOfStock = product.stock <= 0;
+  const kind = productKind(product);
 
   return (
     <article className="pcard" onClick={onClick}>
@@ -46,7 +49,12 @@ export function ProductCard({
           <div className="pcat eyebrow">{product.category.name}</div>
         )}
         <div className="pname">{product.name}</div>
-        <Price value={product.price} />
+        <Price value={productDisplayPrice(product)} unit={kind === 'loose'} />
+        {kind === 'fixed' && product.unitWeightKg ? (
+          <div className="mt-0.5 text-[11px] text-tan-dim">
+            ≈ {product.unitWeightKg} kg · {fmtPrice(product.price)}/kg
+          </div>
+        ) : null}
         <button
           className="add-btn bottom-right"
           onClick={onAddToCart}
