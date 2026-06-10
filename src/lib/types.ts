@@ -21,6 +21,7 @@ export interface Product {
   category: Category;
   active: boolean;
   displayOrder: number;
+  featured?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -56,11 +57,13 @@ export interface Order {
   customerEmail?: string;
   deliveryMethod?: DeliveryMethod;
   items: {
-    product: {
+    product?: {
       _id: string;
       name: string;
       price: number;
     };
+    combo?: string;
+    name?: string;
     quantity: number;
     priceAtOrder: number;
     weightKg?: number;
@@ -114,7 +117,46 @@ export interface CreateOrderPayload {
   customerZipCode?: string;
   customerEmail?: string;
   deliveryMethod?: DeliveryMethod;
-  items: { productId: string; quantity: number; weightKg?: number }[];
+  items: {
+    productId?: string;
+    comboId?: string;
+    quantity: number;
+    weightKg?: number;
+  }[];
+}
+
+export interface Combo {
+  _id: string;
+  name: string;
+  description?: string;
+  serves?: string;
+  price: number;
+  oldPrice?: number;
+  imageUrl?: string;
+  items: string[];
+  active: boolean;
+  displayOrder: number;
+}
+
+export interface CreateComboDto {
+  name: string;
+  description?: string;
+  serves?: string;
+  price: number;
+  oldPrice?: number;
+  imageUrl?: string;
+  items?: string[];
+}
+
+export interface UpdateComboDto {
+  name?: string;
+  description?: string;
+  serves?: string;
+  price?: number;
+  oldPrice?: number;
+  imageUrl?: string;
+  items?: string[];
+  active?: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -146,6 +188,7 @@ export interface CreateProductDto {
   imageUrl?: string;
   videoUrl?: string;
   category: string;
+  featured?: boolean;
 }
 
 export interface UpdateProductDto {
@@ -161,6 +204,7 @@ export interface UpdateProductDto {
   videoUrl?: string;
   category?: string;
   active?: boolean;
+  featured?: boolean;
 }
 
 export interface CreateCategoryDto {

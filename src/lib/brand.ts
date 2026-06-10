@@ -6,14 +6,16 @@ export interface BrandCategory {
   id: string;
   label: string;
   icon: IconName;
+  href: string;
 }
 
-/** Categorías destacadas de la home (link al catálogo filtrado). */
+/** Accesos rápidos fijos de la home: 3 categorías (filtran el catálogo por
+ *  nombre; si la categoría no existe aún, el catálogo queda vacío) + Combos. */
 export const BRAND_CATEGORIES: BrandCategory[] = [
-  { id: 'cortes', label: 'Cortes', icon: 'steak' },
-  { id: 'milanesas', label: 'Milanesas', icon: 'mila' },
-  { id: 'congelados', label: 'Congelados', icon: 'snow' },
-  { id: 'delivery', label: 'Delivery', icon: 'truck' },
+  { id: 'cortes', label: 'Cortes', icon: 'steak', href: '/menu?cat=Cortes' },
+  { id: 'milanesas', label: 'Milanesas', icon: 'mila', href: '/menu?cat=Milanesas' },
+  { id: 'congelados', label: 'Congelados', icon: 'snow', href: '/menu?cat=Congelados' },
+  { id: 'combos', label: 'Combos', icon: 'flame', href: '/combos' },
 ];
 
 export interface BrandFeature {

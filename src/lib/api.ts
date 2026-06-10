@@ -6,6 +6,7 @@ import type {
   Order,
   LoginResponse,
   CreateOrderPayload,
+  Combo,
 } from './types';
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -32,11 +33,13 @@ export const api = {
     page?: number;
     limit?: number;
     categoryId?: string;
+    featured?: boolean;
   }) => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', String(params.page));
     if (params?.limit) searchParams.set('limit', String(params.limit));
     if (params?.categoryId) searchParams.set('categoryId', params.categoryId);
+    if (params?.featured) searchParams.set('featured', 'true');
     const query = searchParams.toString();
     const res = await fetch(`${API_URL}/products${query ? `?${query}` : ''}`);
     return handleResponse<PaginatedResponse<Product>>(res);
@@ -45,6 +48,12 @@ export const api = {
   getProduct: async (id: string): Promise<Product> => {
     const res = await fetch(`${API_URL}/products/${id}`);
     return handleResponse<Product>(res);
+  },
+
+  // Combos
+  getCombos: async () => {
+    const res = await fetch(`${API_URL}/combos`);
+    return handleResponse<PaginatedResponse<Combo>>(res);
   },
 
   // Categories
