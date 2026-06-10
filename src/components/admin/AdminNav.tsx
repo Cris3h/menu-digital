@@ -8,6 +8,7 @@ import { LogOut, Menu, X, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/auth';
 import { useToast } from '@/hooks/useToast';
+import { Logo } from '@/components/ui/Logo';
 
 const navLinks: readonly {
   href: string;
@@ -46,10 +47,13 @@ export function AdminNav() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         <Link
           href="/admin/dashboard"
-          className="text-xl font-bold text-gold-200 transition-colors hover:text-gold-100"
+          className="flex items-center gap-2.5"
           onClick={() => setMobileOpen(false)}
         >
-          miinuta Admin
+          <Logo className="scale-[0.7]" />
+          <span className="eyebrow" style={{ color: 'var(--gold)' }}>
+            Panel
+          </span>
         </Link>
 
         {/* Desktop nav */}

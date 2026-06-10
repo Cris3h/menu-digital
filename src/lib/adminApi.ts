@@ -1,5 +1,6 @@
 import { authFetch } from './auth';
 import { API_URL } from './constants';
+import type { Settings } from './settings';
 import type {
   Product,
   Category,
@@ -11,6 +12,9 @@ import type {
   UpdateProductDto,
   CreateCategoryDto,
   UpdateCategoryDto,
+  Combo,
+  CreateComboDto,
+  UpdateComboDto,
   OverviewResult,
   DailyVisit,
   PageVisit,
@@ -37,6 +41,62 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export const adminApi = {
+  // ---- Settings (configuración del negocio) ----
+  getSettings: async () => {
+    const res = await authFetch(`${API_URL}/settings`);
+    return handleResponse<Settings>(res);
+  },
+  updateSettings: async (data: Partial<Settings>) => {
+    // El form manda el objeto completo que vino del GET, que incluye metadatos
+    // de Mongo (_id, __v, etc.). El backend valida con forbidNonWhitelisted, así
+    // que los descartamos para no recibir un 400.
+    const {
+      _id,
+      singletonKey,
+      createdAt,
+      updatedAt,
+      __v,
+      ...payload
+    } = data as Record<string, unknown>;
+    void _id;
+    void singletonKey;
+    void createdAt;
+    void updatedAt;
+    void __v;
+    const res = await authFetch(`${API_URL}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<Settings>(res);
+  },
+
+  // ---- Combos ----
+  getAllCombos: async () => {
+    const res = await authFetch(`${API_URL}/combos?includeInactive=true&limit=100`);
+    return handleResponse<PaginatedResponse<Combo>>(res);
+  },
+  createCombo: async (data: CreateComboDto) => {
+    const res = await authFetch(`${API_URL}/combos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Combo>(res);
+  },
+  updateCombo: async (id: string, data: UpdateComboDto) => {
+    const res = await authFetch(`${API_URL}/combos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Combo>(res);
+  },
+  deleteCombo: async (id: string) => {
+    const res = await authFetch(`${API_URL}/combos/${id}`, { method: 'DELETE' });
+    return handleResponse<{ deleted: boolean }>(res);
+  },
+
   getAllProducts: async (params?: {
     page?: number;
     limit?: number;

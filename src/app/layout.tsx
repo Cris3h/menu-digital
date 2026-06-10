@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Anton, Zilla_Slab, Manrope } from 'next/font/google';
 import './globals.css';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
+import { SettingsProvider } from '@/components/layout/SettingsProvider';
 import { AnalyticsTracker } from '@/components/layout/AnalyticsTracker';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { SITE_LANDING_IMAGE_URL, SITE_NAME } from '@/lib/constants';
@@ -19,14 +20,25 @@ function getMetadataBase(): URL {
 const siteDescription =
   'La verdadera milanesa artesanal. Crujiente por fuera, increíble por dentro.';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const anton = Anton({
+  variable: '--font-anton-var',
+  weight: '400',
   subsets: ['latin'],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const zillaSlab = Zilla_Slab({
+  variable: '--font-zilla-var',
+  weight: ['600', '700'],
   subsets: ['latin'],
+  display: 'swap',
+});
+
+const manrope = Manrope({
+  variable: '--font-manrope-var',
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -43,8 +55,8 @@ export const metadata: Metadata = {
       {
         url: SITE_LANDING_IMAGE_URL,
         width: 1200,
-        height: 630,
-        alt: `${SITE_NAME} — milanesa artesanal`,
+        height: 1200,
+        alt: `${SITE_NAME} — Carnes y milanesas`,
       },
     ],
   },
@@ -64,9 +76,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
+        className={`${anton.variable} ${zillaSlab.variable} ${manrope.variable} flex min-h-screen flex-col antialiased`}
       >
-        <ConditionalLayout>{children}</ConditionalLayout>
+        <SettingsProvider>
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </SettingsProvider>
         <AnalyticsTracker />
         <ToastContainer />
       </body>

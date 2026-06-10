@@ -1,14 +1,27 @@
+/** Cómo se vende el producto e interpreta `price`. */
+export type SellBy = 'unit' | 'weight';
+
 export interface Product {
   _id: string;
   name: string;
   description: string;
+  /** sellBy=unit → total por unidad. sellBy=weight → precio por kg. */
   price: number;
+  /** Por defecto 'unit' (compatibilidad con productos viejos). */
+  sellBy?: SellBy;
+  /** Solo weight: peso fijo por unidad (costillar). Si no está, peso a elección. */
+  unitWeightKg?: number;
+  /** Solo weight a elección: peso mínimo del selector (default 0.5). */
+  minWeightKg?: number;
+  /** Solo weight a elección: paso del selector (default 0.5). */
+  stepWeightKg?: number;
   stock: number;
   imageUrl: string;
   videoUrl?: string;
   category: Category;
   active: boolean;
   displayOrder: number;
+  featured?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +45,9 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled';
 
+/** Método de entrega del pedido. */
+export type DeliveryMethod = 'delivery' | 'pickup';
+
 export interface Order {
   _id: string;
   orderNumber: string;
@@ -39,14 +55,19 @@ export interface Order {
   customerPhone: string;
   customerAddress?: string;
   customerEmail?: string;
+  deliveryMethod?: DeliveryMethod;
   items: {
-    product: {
+    product?: {
       _id: string;
       name: string;
       price: number;
     };
+    combo?: string;
+    name?: string;
     quantity: number;
     priceAtOrder: number;
+    weightKg?: number;
+    lineTotal?: number;
   }[];
   total: number;
   status: OrderStatus;
@@ -85,6 +106,7 @@ export interface CheckoutFormData {
   customerAddress?: string;
   customerZipCode?: string;
   customerEmail?: string;
+  deliveryMethod: DeliveryMethod;
   notes?: string;
 }
 
@@ -94,7 +116,47 @@ export interface CreateOrderPayload {
   customerAddress?: string;
   customerZipCode?: string;
   customerEmail?: string;
-  items: { productId: string; quantity: number }[];
+  deliveryMethod?: DeliveryMethod;
+  items: {
+    productId?: string;
+    comboId?: string;
+    quantity: number;
+    weightKg?: number;
+  }[];
+}
+
+export interface Combo {
+  _id: string;
+  name: string;
+  description?: string;
+  serves?: string;
+  price: number;
+  oldPrice?: number;
+  imageUrl?: string;
+  items: string[];
+  active: boolean;
+  displayOrder: number;
+}
+
+export interface CreateComboDto {
+  name: string;
+  description?: string;
+  serves?: string;
+  price: number;
+  oldPrice?: number;
+  imageUrl?: string;
+  items?: string[];
+}
+
+export interface UpdateComboDto {
+  name?: string;
+  description?: string;
+  serves?: string;
+  price?: number;
+  oldPrice?: number;
+  imageUrl?: string;
+  items?: string[];
+  active?: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -118,21 +180,31 @@ export interface CreateProductDto {
   name: string;
   description?: string;
   price: number;
+  sellBy?: SellBy;
+  unitWeightKg?: number;
+  minWeightKg?: number;
+  stepWeightKg?: number;
   stock: number;
   imageUrl?: string;
   videoUrl?: string;
   category: string;
+  featured?: boolean;
 }
 
 export interface UpdateProductDto {
   name?: string;
   description?: string;
   price?: number;
+  sellBy?: SellBy;
+  unitWeightKg?: number;
+  minWeightKg?: number;
+  stepWeightKg?: number;
   stock?: number;
   imageUrl?: string;
   videoUrl?: string;
   category?: string;
   active?: boolean;
+  featured?: boolean;
 }
 
 export interface CreateCategoryDto {

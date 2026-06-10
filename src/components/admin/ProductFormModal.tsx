@@ -26,11 +26,14 @@ interface FormData {
   name: string;
   description: string;
   price: string;
+  sellBy: 'unit' | 'weight';
+  unitWeightKg: string;
   stock: string;
   imageUrl: string;
   videoUrl: string;
   category: string;
   active: boolean;
+  featured: boolean;
 }
 
 interface FormErrors {
@@ -75,11 +78,14 @@ const initialFormData: FormData = {
   name: '',
   description: '',
   price: '',
+  sellBy: 'unit',
+  unitWeightKg: '',
   stock: '0',
   imageUrl: '',
   videoUrl: '',
   category: '',
   active: true,
+  featured: false,
 };
 
 function validateForm(data: FormData, isEdit: boolean): FormErrors {
@@ -141,6 +147,8 @@ export function ProductFormModal({
           name: product.name,
           description: product.description || '',
           price: String(product.price),
+          sellBy: product.sellBy === 'weight' ? 'weight' : 'unit',
+          unitWeightKg: product.unitWeightKg ? String(product.unitWeightKg) : '',
           stock: String(product.stock),
           imageUrl: product.imageUrl || '',
           videoUrl: product.videoUrl || '',
@@ -149,6 +157,7 @@ export function ProductFormModal({
               ? product.category._id
               : product.category,
           active: product.active,
+          featured: product.featured ?? false,
         });
       } else {
         setData(initialFormData);
@@ -209,14 +218,21 @@ export function ProductFormModal({
 
     setLoading(true);
     try {
+      const unitWeightKg =
+        data.sellBy === 'weight' && data.unitWeightKg.trim()
+          ? Number(data.unitWeightKg)
+          : undefined;
       const payload = {
         name: data.name.trim(),
         description: data.description.trim() || undefined,
         price: Number(data.price),
+        sellBy: data.sellBy,
+        unitWeightKg,
         stock: Number(data.stock),
         imageUrl: data.imageUrl.trim() || undefined,
         videoUrl: data.videoUrl.trim() || undefined,
         category: data.category,
+        featured: data.featured,
         ...(isEdit && { active: data.active }),
       };
 
@@ -228,9 +244,12 @@ export function ProductFormModal({
           name: payload.name,
           description: payload.description,
           price: payload.price,
+          sellBy: payload.sellBy,
+          unitWeightKg: payload.unitWeightKg,
           stock: payload.stock,
           imageUrl: payload.imageUrl,
           category: payload.category,
+          featured: payload.featured,
         });
         toast.success('Producto creado');
       }
@@ -320,10 +339,63 @@ export function ProductFormModal({
                 )}
               </div>
 
+              <div>
+                <label className="mb-2 block font-semibold text-gold-200">
+                  Tipo de venta *
+                </label>
+                <select
+                  value={data.sellBy}
+                  onChange={(e) =>
+                    setData((prev) => ({
+                      ...prev,
+                      sellBy: e.target.value as 'unit' | 'weight',
+                    }))
+                  }
+                  disabled={loading}
+                  className={`${inputBase} border-gold-300/20`}
+                >
+                  <option value="unit">Por unidad (precio fijo)</option>
+                  <option value="weight">Por peso ($/kg)</option>
+                </select>
+                <p className="mt-1 text-xs text-white/50">
+                  {data.sellBy === 'unit'
+                    ? 'Precio fijo por unidad (ej: hamburguesas x6).'
+                    : 'Precio por kilo. Para costillar/medio costillar cargá el peso por unidad abajo; si lo dejás vacío, el cliente elige los kilos.'}
+                </p>
+              </div>
+
+              {data.sellBy === 'weight' && (
+                <div>
+                  <label className="mb-2 block font-semibold text-gold-200">
+                    Peso por unidad (kg) — opcional
+                  </label>
+                  <input
+                    type="number"
+                    value={data.unitWeightKg}
+                    onChange={(e) =>
+                      setData((prev) => ({
+                        ...prev,
+                        unitWeightKg: e.target.value,
+                      }))
+                    }
+                    placeholder="Ej: 5.5 (costillar). Vacío = el cliente elige."
+                    min={0}
+                    step={0.1}
+                    disabled={loading}
+                    className={`${inputBase} border-gold-300/20`}
+                  />
+                  <p className="mt-1 text-xs text-white/50">
+                    {data.unitWeightKg.trim()
+                      ? `Se vende por unidad: ${data.unitWeightKg} kg × $/kg.`
+                      : 'Vacío = corte suelto: el cliente elige los kilos.'}
+                  </p>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-2 block font-semibold text-gold-200">
-                    Precio *
+                    {data.sellBy === 'weight' ? 'Precio por kilo ($/kg) *' : 'Precio por unidad *'}
                   </label>
                   <input
                     type="number"
@@ -526,6 +598,22 @@ export function ProductFormModal({
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  checked={data.featured}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, featured: e.target.checked }))
+                  }
+                  disabled={loading}
+                  className="size-5 rounded border-gold-300/30 bg-dark-700 text-gold-300 focus:ring-gold-300/50"
+                />
+                <label htmlFor="featured" className="font-medium text-gold-200">
+                  Destacado (aparece en “Destacados” del inicio)
+                </label>
               </div>
 
               {isEdit && (

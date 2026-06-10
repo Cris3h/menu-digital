@@ -14,3 +14,19 @@ export function formatPrice(value: number): string {
     currency: 'ARS',
   }).format(value);
 }
+
+/**
+ * Formato de precio de marca: "$12.900" (sin decimales), como en el diseño.
+ */
+export function fmtPrice(value: number): string {
+  return '$' + Math.round(value).toLocaleString('es-AR');
+}
+
+/**
+ * Une clases condicionalmente (filtra falsy). Versión liviana de clsx.
+ */
+export function cn(
+  ...classes: Array<string | false | null | undefined>
+): string {
+  return classes.filter(Boolean).join(' ');
+}

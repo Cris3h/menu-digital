@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { MobileBottomNav } from './MobileBottomNav';
 
 export function ConditionalLayout({
   children,
@@ -10,9 +11,11 @@ export function ConditionalLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin');
+  // Rutas "bare": traen su propio chrome (admin) o un header propio (checkout).
+  const isBare =
+    pathname?.startsWith('/admin') || pathname === '/checkout';
 
-  if (isAdmin) {
+  if (isBare) {
     return <>{children}</>;
   }
 
@@ -21,6 +24,7 @@ export function ConditionalLayout({
       <Header />
       <div className="flex-1">{children}</div>
       <Footer />
+      <MobileBottomNav />
     </>
   );
 }

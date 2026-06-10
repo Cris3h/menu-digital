@@ -110,6 +110,14 @@ export function OrderDetailModal({
                       <span className="text-white/50">Teléfono:</span>{' '}
                       <span className="text-white">{order.customerPhone}</span>
                     </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-white/50">Entrega:</span>{' '}
+                      <span className="font-semibold text-gold-200">
+                        {order.deliveryMethod === 'pickup'
+                          ? '🏪 Retiro en el local'
+                          : '🚚 Delivery a domicilio'}
+                      </span>
+                    </div>
                     {order.customerAddress && (
                       <div className="sm:col-span-2">
                         <span className="text-white/50">Dirección:</span>{' '}
@@ -157,16 +165,29 @@ export function OrderDetailModal({
                             className="border-b border-white/5"
                           >
                             <td className="py-3 pr-4 text-white">
-                              {item.product.name}
+                              {item.product?.name ?? item.name ?? 'Ítem'}
+                              {item.combo ? (
+                                <span className="block text-xs text-gold-200/70">
+                                  Combo
+                                </span>
+                              ) : null}
+                              {item.weightKg ? (
+                                <span className="block text-xs text-white/50">
+                                  {item.weightKg} kg c/u · por peso
+                                </span>
+                              ) : null}
                             </td>
                             <td className="py-3 px-4 text-right text-white/80">
                               {item.quantity}
                             </td>
                             <td className="py-3 px-4 text-right text-white/80">
                               {formatPrice(item.priceAtOrder)}
+                              {item.weightKg ? '/kg' : ''}
                             </td>
                             <td className="py-3 pl-4 text-right font-medium text-white">
-                              {formatPrice(item.quantity * item.priceAtOrder)}
+                              {formatPrice(
+                                item.lineTotal ?? item.quantity * item.priceAtOrder
+                              )}
                             </td>
                           </tr>
                         ))}

@@ -1,8 +1,10 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4001';
 
-/** Hero de la landing y preview al compartir (WhatsApp, redes, etc.) */
+/** Imagen del preview al compartir (WhatsApp, redes, etc.): el emblema/logo
+ *  de la marca. Forzamos f_jpg para que los scrapers sociales lo rendericen
+ *  sin problemas, cuadrado 1200px. */
 export const SITE_LANDING_IMAGE_URL =
-  'https://res.cloudinary.com/dj1hi4rjf/image/upload/v1773515597/img50.jpg';
+  'https://res.cloudinary.com/dmaciisvy/image/upload/f_jpg,q_auto,w_1200/v1781018089/WhatsApp_Image_2026-06-09_at_00.50.34_qowvpq.jpg';
 
 export const SITE_NAME = 'miinuta';
 export const CONTACT_PHONE = '+549 2364 26-1926';
