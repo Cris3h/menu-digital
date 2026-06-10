@@ -33,6 +33,7 @@ interface FormData {
   videoUrl: string;
   category: string;
   active: boolean;
+  featured: boolean;
 }
 
 interface FormErrors {
@@ -84,6 +85,7 @@ const initialFormData: FormData = {
   videoUrl: '',
   category: '',
   active: true,
+  featured: false,
 };
 
 function validateForm(data: FormData, isEdit: boolean): FormErrors {
@@ -155,6 +157,7 @@ export function ProductFormModal({
               ? product.category._id
               : product.category,
           active: product.active,
+          featured: product.featured ?? false,
         });
       } else {
         setData(initialFormData);
@@ -229,6 +232,7 @@ export function ProductFormModal({
         imageUrl: data.imageUrl.trim() || undefined,
         videoUrl: data.videoUrl.trim() || undefined,
         category: data.category,
+        featured: data.featured,
         ...(isEdit && { active: data.active }),
       };
 
@@ -245,6 +249,7 @@ export function ProductFormModal({
           stock: payload.stock,
           imageUrl: payload.imageUrl,
           category: payload.category,
+          featured: payload.featured,
         });
         toast.success('Producto creado');
       }
@@ -593,6 +598,22 @@ export function ProductFormModal({
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  checked={data.featured}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, featured: e.target.checked }))
+                  }
+                  disabled={loading}
+                  className="size-5 rounded border-gold-300/30 bg-dark-700 text-gold-300 focus:ring-gold-300/50"
+                />
+                <label htmlFor="featured" className="font-medium text-gold-200">
+                  Destacado (aparece en “Destacados” del inicio)
+                </label>
               </div>
 
               {isEdit && (

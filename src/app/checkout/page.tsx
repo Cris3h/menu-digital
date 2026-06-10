@@ -49,11 +49,11 @@ export default function CheckoutPage() {
           customerZipCode: data.customerZipCode || undefined,
           customerEmail: data.customerEmail,
           deliveryMethod: data.deliveryMethod,
-          items: items.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-            weightKg: i.weightKg,
-          })),
+          items: items.map((i) =>
+            i.comboId
+              ? { comboId: i.comboId, quantity: i.quantity }
+              : { productId: i.productId, quantity: i.quantity, weightKg: i.weightKg }
+          ),
         });
 
         const { initPoint } = await api.createPaymentPreference(order._id);

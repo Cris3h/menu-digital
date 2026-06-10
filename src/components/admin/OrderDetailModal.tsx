@@ -165,7 +165,12 @@ export function OrderDetailModal({
                             className="border-b border-white/5"
                           >
                             <td className="py-3 pr-4 text-white">
-                              {item.product.name}
+                              {item.product?.name ?? item.name ?? 'Ítem'}
+                              {item.combo ? (
+                                <span className="block text-xs text-gold-200/70">
+                                  Combo
+                                </span>
+                              ) : null}
                               {item.weightKg ? (
                                 <span className="block text-xs text-white/50">
                                   {item.weightKg} kg c/u · por peso

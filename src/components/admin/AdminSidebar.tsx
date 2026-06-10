@@ -13,6 +13,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: 'trending' },
   { href: '/admin/orders', label: 'Pedidos', icon: 'clipboard' },
   { href: '/admin/products', label: 'Productos', icon: 'box' },
+  { href: '/admin/combos', label: 'Combos', icon: 'flame' },
   { href: '/admin/categories', label: 'Categorías', icon: 'grid' },
   { href: '/admin/analytics', label: 'Analíticas', icon: 'dollar' },
   { href: '/admin/settings', label: 'Configuración', icon: 'settings' },

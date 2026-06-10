@@ -32,10 +32,12 @@ export function HomeContent() {
     settings.whatsappMessage
   );
 
-  const { data } = useSWR<PaginatedResponse<Product>>('home-featured', () =>
-    api.getProducts({ page: 1, limit: 3 })
-  );
-  const featured = data?.data ?? [];
+  const { data } = useSWR<PaginatedResponse<Product>>('home-featured', async () => {
+    const f = await api.getProducts({ page: 1, limit: 8, featured: true });
+    // Si el admin no marcó destacados, caemos a los primeros productos.
+    return f.data.length > 0 ? f : api.getProducts({ page: 1, limit: 3 });
+  });
+  const featured = (data?.data ?? []).slice(0, 3);
 
   const handleAdd = (p: Product) => {
     if (p.stock <= 0) return;
@@ -103,7 +105,7 @@ export function HomeContent() {
             {BRAND_CATEGORIES.map((c) => {
               const I = Icon[c.icon];
               return (
-                <Link key={c.id} href="/menu" className="m-cat min-w-0">
+                <Link key={c.id} href={c.href} className="m-cat min-w-0">
                   <div className="ring">
                     <I />
                   </div>
@@ -121,7 +123,7 @@ export function HomeContent() {
           {BRAND_CATEGORIES.map((c) => {
             const I = Icon[c.icon];
             return (
-              <Link key={c.id} href="/menu" className="cat-tile">
+              <Link key={c.id} href={c.href} className="cat-tile">
                 <I />
                 <span className="lbl">{c.label}</span>
               </Link>

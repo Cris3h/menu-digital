@@ -65,6 +65,8 @@ export function Header() {
             <img
               src={LOGO_BADGE}
               alt="MIINUTA. CARNES"
+              width={80}
+              height={80}
               className="h-20 w-20 object-contain"
             />
             <Logo />
@@ -123,6 +125,8 @@ export function Header() {
             <img
               src={LOGO_BADGE}
               alt="MIINUTA. CARNES"
+              width={64}
+              height={64}
               className="h-16 w-16 object-contain"
             />
             <Logo className="scale-[0.82]" />
@@ -171,7 +175,7 @@ export function Header() {
         >
           <Link href="/" className="flex items-center gap-2.5" aria-label="Inicio">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO_BADGE} alt="" className="h-12 w-12 object-contain" />
+            <img src={LOGO_BADGE} alt="" width={48} height={48} className="h-12 w-12 object-contain" />
             <Logo className="scale-[0.8]" />
           </Link>
           <button

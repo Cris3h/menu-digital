@@ -32,6 +32,9 @@ export function MenuContent() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     () => searchParams.get('category') ?? null
   );
+  // Filtro por NOMBRE de categoría (tiles del inicio: /menu?cat=Cortes).
+  const catNameParam = searchParams.get('cat');
+  const [catNotFound, setCatNotFound] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
@@ -47,23 +50,49 @@ export function MenuContent() {
     setCurrentPage(1);
   }, [selectedCategoryId]);
 
-  const { data: productsData, error: productsError } = useSWR<
-    PaginatedResponse<Product>
-  >(['products', selectedCategoryId, currentPage], () =>
-    api.getProducts({
-      page: currentPage,
-      limit: ITEMS_PER_PAGE,
-      categoryId: selectedCategoryId ?? undefined,
-    })
-  );
-
   const { data: categoriesData } = useSWR<PaginatedResponse<Category>>(
     'categories',
     () => api.getCategories({ page: 1, limit: 20 })
   );
+  const categories = categoriesData?.data ?? [];
+
+  // Resolver ?cat=<nombre> a una categoría real (tiles del inicio).
+  // Si la categoría no existe, marcamos catNotFound → mostramos vacío
+  // (sin mandar un id inválido al backend, que daría un CastError 500).
+  useEffect(() => {
+    if (!catNameParam || !categoriesData) return;
+    const match = categories.find(
+      (c) => c.name.toLowerCase() === catNameParam.toLowerCase()
+    );
+    if (match) {
+      setSelectedCategoryId(match._id);
+      setCatNotFound(false);
+    } else {
+      setCatNotFound(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catNameParam, categoriesData]);
+
+  // Mientras esperamos resolver el nombre de categoría no pedimos productos
+  // (evita un flash con todo el catálogo antes de aplicar el filtro).
+  const productsKey =
+    catNameParam && !categoriesData
+      ? null
+      : ['products', selectedCategoryId, currentPage, catNotFound];
+
+  const { data: productsData, error: productsError } = useSWR<
+    PaginatedResponse<Product>
+  >(productsKey, () =>
+    catNotFound
+      ? { data: [], page: 1, limit: ITEMS_PER_PAGE, total: 0, totalPages: 0 }
+      : api.getProducts({
+          page: currentPage,
+          limit: ITEMS_PER_PAGE,
+          categoryId: selectedCategoryId ?? undefined,
+        })
+  );
 
   const products = productsData?.data ?? [];
-  const categories = categoriesData?.data ?? [];
 
   const filteredBySearch = debouncedSearch
     ? products.filter((p) =>
@@ -132,19 +161,25 @@ export function MenuContent() {
           </div>
           <div className="filter-tabs lg:ml-auto lg:gap-2.5">
             <button
-              className={cn('ftab', !selectedCategoryId && 'active')}
-              onClick={() => setSelectedCategoryId(null)}
-              style={pillStyle(!selectedCategoryId)}
+              className={cn('ftab', !selectedCategoryId && !catNotFound && 'active')}
+              onClick={() => {
+                setSelectedCategoryId(null);
+                setCatNotFound(false);
+              }}
+              style={pillStyle(!selectedCategoryId && !catNotFound)}
             >
               Todos
             </button>
             {categories.map((c) => {
-              const active = selectedCategoryId === c._id;
+              const active = !catNotFound && selectedCategoryId === c._id;
               return (
                 <button
                   key={c._id}
                   className={cn('ftab', active && 'active')}
-                  onClick={() => setSelectedCategoryId(c._id)}
+                  onClick={() => {
+                    setSelectedCategoryId(c._id);
+                    setCatNotFound(false);
+                  }}
                   style={pillStyle(active)}
                 >
                   {c.name}
@@ -176,6 +211,18 @@ export function MenuContent() {
             <p className="mt-2 text-tan-dim">
               Probá con otros filtros o limpiá la búsqueda.
             </p>
+            {(searchQuery || selectedCategoryId || catNotFound) && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategoryId(null);
+                  setCatNotFound(false);
+                }}
+                className="btn btn-gold mt-5 h-[44px] px-6 text-[14px]"
+              >
+                Limpiar filtros
+              </button>
+            )}
           </div>
         )}
 
@@ -280,6 +327,7 @@ export function MenuContent() {
 
 function pillStyle(active: boolean): React.CSSProperties {
   return {
+    flexShrink: 0, // no se comprimen: con muchas categorías la fila scrollea de costado
     padding: '10px 18px',
     borderRadius: 11,
     background: active ? 'var(--gold)' : 'var(--panel)',

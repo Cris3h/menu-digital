@@ -20,6 +20,8 @@ export interface CartItem {
   kind?: CartKind;
   /** fixed: peso por unidad. loose: kilos elegidos. */
   weightKg?: number;
+  /** Si la línea es un combo, su id (para enviarlo al backend como comboId). */
+  comboId?: string;
 }
 
 /** Subtotal de una línea según su tipo de venta. */

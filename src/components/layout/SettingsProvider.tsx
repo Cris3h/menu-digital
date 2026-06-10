@@ -14,6 +14,9 @@ export function useSettings(): Settings {
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const { data } = useSWR<Settings>('site-settings', fetchSettings, {
     revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    revalidateIfStale: false,
+    dedupingInterval: 600000, // 10 min: no re-pide settings constantemente
     // Si falla, seguimos con defaults (no rompe el sitio).
     shouldRetryOnError: false,
   });

@@ -6,6 +6,7 @@ import { unsplash } from '@/lib/brand';
 import { useSettings } from '@/components/layout/SettingsProvider';
 
 const MAP = unsplash('photo-1524661135-423995f22d0b', 800);
+const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
 
 export function ContactoContent() {
   const settings = useSettings();
@@ -13,6 +14,22 @@ export function ContactoContent() {
     settings.whatsappNumber,
     settings.whatsappMessage
   );
+
+  // Mapa real si hay coordenadas cargadas. Con API key usamos la Maps Embed API
+  // en vista SATELITAL (ideal para una quinta rural: se ve el terreno). Sin key,
+  // caemos al iframe keyless (mapa de calles), y si tampoco hay coords, al fondo
+  // decorativo.
+  const hasCoords = settings.lat != null && settings.lng != null;
+  const coords = `${settings.lat},${settings.lng}`;
+  const zoom = settings.mapZoom || 16;
+  let mapSrc = '';
+  if (hasCoords && MAPS_KEY) {
+    mapSrc = `https://www.google.com/maps/embed/v1/place?key=${MAPS_KEY}&q=${coords}&zoom=${zoom}&maptype=satellite`;
+  } else if (hasCoords) {
+    mapSrc = `https://www.google.com/maps?q=${coords}&z=${zoom}&output=embed`;
+  }
+  const hasMap = !!mapSrc;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}`;
 
   const rows: [IconName, string, string][] = [
     ['mapPin', 'Dirección', settings.address],
@@ -70,36 +87,93 @@ export function ContactoContent() {
         </div>
 
         {/* Mapa */}
-        <div
-          className="relative min-h-[300px] overflow-hidden rounded-[18px] lg:min-h-[480px]"
-          style={{ boxShadow: 'var(--shadow)', background: '#1a2620' }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={MAP}
-            alt="Mapa"
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ opacity: 0.55 }}
-          />
+        <div>
           <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(180deg,rgba(12,8,5,.2),rgba(12,8,5,.75))' }}
-          />
-          <div className="absolute left-1/2 top-[46%] -translate-x-1/2 -translate-y-1/2 text-gold">
-            <Icon.mapPin style={{ width: 52, height: 52 }} />
+            className="relative h-[320px] overflow-hidden rounded-[18px] lg:h-auto lg:min-h-[480px]"
+            style={{ boxShadow: 'var(--shadow)', background: '#1a2620' }}
+          >
+            {hasMap ? (
+              <iframe
+                title={`Ubicación de ${settings.businessName}`}
+                src={mapSrc}
+                className="absolute inset-0 h-full w-full"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            ) : (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={MAP}
+                  alt="Mapa"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ opacity: 0.55 }}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{ background: 'linear-gradient(180deg,rgba(12,8,5,.2),rgba(12,8,5,.75))' }}
+                />
+                <div className="absolute left-1/2 top-[46%] -translate-x-1/2 -translate-y-1/2 text-gold">
+                  <Icon.mapPin style={{ width: 52, height: 52 }} />
+                </div>
+              </>
+            )}
+
+            {/* Overlay con nombre/dirección — SOLO desktop. En mobile taparía
+                el mapa, así que ahí va debajo (ver tarjeta lg:hidden). */}
+            <div
+              className="pointer-events-none absolute inset-x-6 bottom-6 hidden items-center justify-between gap-3 rounded-[14px] p-[18px_22px] lg:flex"
+              style={{
+                background: 'rgba(20,13,8,.82)',
+                backdropFilter: 'blur(6px)',
+                boxShadow: 'inset 0 0 0 1px var(--line)',
+              }}
+            >
+              <div>
+                <div className="font-display text-[22px] text-cream">
+                  {settings.businessName}
+                </div>
+                <div className="mt-1 text-[14px] text-tan">{settings.address}</div>
+              </div>
+              {hasMap && (
+                <a
+                  href={directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-gold pointer-events-auto h-[44px] shrink-0 px-5 text-[14px]"
+                >
+                  <Icon.mapPin style={{ width: 16, height: 16 }} /> Cómo llegar
+                </a>
+              )}
+            </div>
           </div>
+
+          {/* En mobile la tarjeta va DEBAJO del mapa, sin taparlo. */}
           <div
-            className="absolute inset-x-6 bottom-6 rounded-[14px] p-[18px_22px]"
+            className="mt-3 flex flex-col gap-3 rounded-[14px] p-[16px_18px] lg:hidden"
             style={{
-              background: 'rgba(20,13,8,.82)',
-              backdropFilter: 'blur(6px)',
+              background: 'linear-gradient(180deg,var(--card-a),var(--card-b))',
               boxShadow: 'inset 0 0 0 1px var(--line)',
             }}
           >
-            <div className="font-display text-[22px] text-cream">
-              {settings.businessName}
+            <div>
+              <div className="font-display text-[20px] text-cream">
+                {settings.businessName}
+              </div>
+              <div className="mt-1 text-[14px] text-tan">{settings.address}</div>
             </div>
-            <div className="mt-1 text-[14px] text-tan">{settings.address}</div>
+            {hasMap && (
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-gold h-[48px] text-[14px]"
+              >
+                <Icon.mapPin style={{ width: 16, height: 16 }} /> Cómo llegar
+              </a>
+            )}
           </div>
         </div>
       </div>

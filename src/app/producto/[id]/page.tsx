@@ -56,7 +56,11 @@ function AmountControl({
       >
         <button
           className={bs}
-          onClick={() => setWeight((w) => Math.max(min, +(w - step).toFixed(2)))}
+          onClick={() =>
+            setWeight((w) =>
+              Math.max(min, +((Number.isFinite(w) ? w : min) - step).toFixed(2))
+            )
+          }
           aria-label="Menos peso"
         >
           −
@@ -65,16 +69,26 @@ function AmountControl({
           type="number"
           step={step}
           min={min}
-          value={weight}
-          onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
-          onBlur={() => setWeight((w) => Math.max(min, +(w || min).toFixed(2)))}
+          // Permite vaciar el campo mientras editás (NaN = vacío). Al salir se
+          // normaliza al mínimo si quedó vacío.
+          value={Number.isFinite(weight) ? weight : ''}
+          onChange={(e) =>
+            setWeight(e.target.value === '' ? NaN : parseFloat(e.target.value))
+          }
+          onBlur={() =>
+            setWeight((w) =>
+              Number.isFinite(w) ? Math.max(min, +w.toFixed(2)) : min
+            )
+          }
           className="tnum w-[52px] bg-transparent text-center text-[15px] text-cream outline-none"
           aria-label="Peso en kg"
         />
         <span className="pr-1 text-[13px] text-tan-dim">kg</span>
         <button
           className={bs}
-          onClick={() => setWeight((w) => +(w + step).toFixed(2))}
+          onClick={() =>
+            setWeight((w) => +((Number.isFinite(w) ? w : min) + step).toFixed(2))
+          }
           aria-label="Más peso"
         >
           +
@@ -153,7 +167,11 @@ export default function ProductDetailPage() {
   const isLoose = kind === 'loose';
   const step = looseStep(product);
   const min = looseMin(product);
-  const effWeight = Math.max(min, +weight.toFixed(2));
+  // Si el campo de kg está vacío (NaN mientras editás), usamos el mínimo, así
+  // el total y el "agregar al carrito" nunca quedan en NaN.
+  const effWeight = Number.isFinite(weight)
+    ? Math.max(min, +weight.toFixed(2))
+    : min;
 
   const previewTotal =
     kind === 'unit'
