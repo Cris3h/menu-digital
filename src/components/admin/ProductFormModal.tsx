@@ -2,12 +2,22 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Plus, Hash, Scale, Layers, Trash2 } from 'lucide-react';
+import {
+  Loader2,
+  Plus,
+  Hash,
+  Scale,
+  Layers,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react';
 import type { Product, SellMode } from '@/lib/types';
 import { adminApi } from '@/lib/adminApi';
 import { productMode, availablePieces } from '@/lib/product';
 import { fmtPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { Button } from '@/components/ui/Button';
 import { ImageUploader } from '@/components/ImageUploader';
 import { InfoTip } from '@/components/ui/InfoTip';
@@ -129,29 +139,112 @@ const initialFormData: FormData = {
   featured: false,
 };
 
+/**
+ * Parsea números aceptando coma o punto como separador decimal (es-AR).
+ * Atajo: si empieza con "0" seguido de dígitos y sin separador, lo toma como
+ * decimal — "05" → 0,5; "025" → 0,25. Los enteros (6, 60, 24500) no se tocan.
+ */
+function toNum(s: string): number {
+  let v = String(s).trim().replace(',', '.');
+  if (/^0\d+$/.test(v)) v = '0.' + v.slice(1);
+  return Number(v);
+}
+
+/**
+ * Input decimal con flechitas (▲▼) para sumar/restar. Muestra coma, acepta coma
+ * o punto al tipear, y al salir del campo lo normaliza (ej: "0.5" → "0,5").
+ */
+function DecimalStepper({
+  value,
+  onChange,
+  step = 0.5,
+  min = 0,
+  placeholder,
+  disabled,
+  hasError,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  step?: number;
+  min?: number;
+  placeholder?: string;
+  disabled?: boolean;
+  hasError?: boolean;
+}) {
+  const fmt = (n: number) => String(+n.toFixed(2)).replace('.', ',');
+  const bump = (dir: 1 | -1) => {
+    const cur = toNum(value);
+    const base = Number.isFinite(cur) ? cur : min;
+    onChange(fmt(Math.max(min, +(base + dir * step).toFixed(2))));
+  };
+  return (
+    <div
+      className={`flex items-stretch overflow-hidden rounded-lg border bg-dark-700 transition-colors focus-within:border-gold-300 focus-within:ring-2 focus-within:ring-gold-300/50 ${
+        hasError ? 'border-red-400' : 'border-gold-300/20'
+      }`}
+    >
+      <input
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/[^0-9.,]/g, ''))}
+        onBlur={() => {
+          const n = toNum(value);
+          if (value.trim() !== '' && Number.isFinite(n)) onChange(fmt(n));
+        }}
+        placeholder={placeholder}
+        disabled={disabled}
+        className="min-w-0 flex-1 bg-transparent px-4 py-3 text-white placeholder:text-white/40 focus:outline-none"
+      />
+      <div className="flex flex-col">
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => bump(1)}
+          disabled={disabled}
+          aria-label="Subir"
+          className="flex flex-1 items-center justify-center border-l border-gold-300/20 px-2.5 text-gold-300 transition-colors hover:bg-gold-300/15 disabled:opacity-40"
+        >
+          <ChevronUp className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => bump(-1)}
+          disabled={disabled}
+          aria-label="Bajar"
+          className="flex flex-1 items-center justify-center border-l border-t border-gold-300/20 px-2.5 text-gold-300 transition-colors hover:bg-gold-300/15 disabled:opacity-40"
+        >
+          <ChevronDown className="size-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function validateForm(data: FormData): FormErrors {
   const errors: FormErrors = {};
   if (!data.name.trim()) errors.name = 'Nombre requerido';
   else if (data.name.trim().length < 3) errors.name = 'Mínimo 3 caracteres';
-  if (!data.price || Number(data.price) <= 0)
+  if (!data.price || toNum(data.price) <= 0)
     errors.price = 'Precio requerido (mayor a 0)';
   if (!data.category) errors.category = 'Categoría requerida';
   if (data.description.length > 1000) errors.description = 'Máximo 1000 caracteres';
 
   if (data.sellMode === 'unit' || data.sellMode === 'bulk') {
-    if (data.stock === '' || Number(data.stock) < 0)
+    if (data.stock === '' || toNum(data.stock) < 0)
       errors.stock =
         data.sellMode === 'bulk' ? 'Poné los kilos (0 o más)' : 'Poné el stock (0 o más)';
   }
   if (data.sellMode === 'bulk') {
-    if (!data.minWeightKg || Number(data.minWeightKg) <= 0)
+    if (!data.minWeightKg || toNum(data.minWeightKg) <= 0)
       errors.minWeightKg = 'Mínimo mayor a 0';
-    if (!data.stepWeightKg || Number(data.stepWeightKg) <= 0)
+    if (!data.stepWeightKg || toNum(data.stepWeightKg) <= 0)
       errors.stepWeightKg = 'Paso mayor a 0';
   }
   if (data.sellMode === 'pieces') {
     const valid = data.pieces.filter(
-      (p) => p.weightKg.trim() && Number(p.weightKg) > 0
+      (p) => p.weightKg.trim() && toNum(p.weightKg) > 0
     );
     if (valid.length === 0) errors.pieces = 'Agregá al menos una pieza con su peso';
   }
@@ -166,6 +259,7 @@ export function ProductFormModal({
   categories = [],
 }: ProductFormModalProps) {
   const toast = useToast();
+  const isDesktop = useIsDesktop();
   const [data, setData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
@@ -301,7 +395,7 @@ export function ProductFormModal({
 
     setLoading(true);
     try {
-      const price = Number(data.price);
+      const price = toNum(data.price);
       const base = {
         name: data.name.trim(),
         description: data.description.trim() || undefined,
@@ -317,7 +411,7 @@ export function ProductFormModal({
       if (data.sellMode === 'unit') {
         modeFields = {
           sellBy: 'unit' as const,
-          stock: Number(data.stock),
+          stock: toNum(data.stock),
           unitWeightKg: undefined,
           minWeightKg: undefined,
           stepWeightKg: undefined,
@@ -326,16 +420,16 @@ export function ProductFormModal({
       } else if (data.sellMode === 'bulk') {
         modeFields = {
           sellBy: 'weight' as const,
-          stock: Number(data.stock),
-          minWeightKg: Number(data.minWeightKg),
-          stepWeightKg: Number(data.stepWeightKg),
+          stock: toNum(data.stock),
+          minWeightKg: toNum(data.minWeightKg),
+          stepWeightKg: toNum(data.stepWeightKg),
           unitWeightKg: undefined,
           pieces: undefined,
         };
       } else {
         const pieces = data.pieces
-          .filter((p) => p.weightKg.trim() && Number(p.weightKg) > 0)
-          .map((p) => ({ weightKg: Number(p.weightKg), available: true }));
+          .filter((p) => p.weightKg.trim() && toNum(p.weightKg) > 0)
+          .map((p) => ({ weightKg: toNum(p.weightKg), available: true }));
         modeFields = {
           sellBy: 'weight' as const,
           pieces,
@@ -349,7 +443,7 @@ export function ProductFormModal({
       const payload = {
         ...base,
         ...modeFields,
-        ...(isEdit && { active: data.active }),
+        active: data.active,
       };
 
       if (isEdit && product) {
@@ -378,9 +472,9 @@ export function ProductFormModal({
   const labelCls =
     'mb-2 flex items-center font-semibold text-gold-200';
 
-  const priceNum = Number(data.price) || 0;
+  const priceNum = toNum(data.price) || 0;
   const validPieces = data.pieces.filter(
-    (p) => p.weightKg.trim() && Number(p.weightKg) > 0
+    (p) => p.weightKg.trim() && toNum(p.weightKg) > 0
   );
 
   return (
@@ -396,11 +490,15 @@ export function ProductFormModal({
             aria-hidden
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="fixed left-1/2 top-1/2 z-[60] max-h-[90vh] w-[calc(100%-2rem)] max-w-[620px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gold-300/30 bg-dark-800 p-6 shadow-2xl"
+            initial={isDesktop ? { x: '100%' } : { opacity: 0, scale: 0.95 }}
+            animate={isDesktop ? { x: 0 } : { opacity: 1, scale: 1 }}
+            exit={isDesktop ? { x: '100%' } : { opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className={
+              isDesktop
+                ? 'fixed right-0 top-0 z-[60] h-full w-[50vw] min-w-[560px] overflow-y-auto border-l border-gold-300/30 bg-dark-800 p-6 shadow-2xl'
+                : 'fixed left-1/2 top-1/2 z-[60] max-h-[90vh] w-[calc(100%-2rem)] max-w-[620px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gold-300/30 bg-dark-800 p-6 shadow-2xl'
+            }
           >
             <h2 className="text-2xl font-bold text-gold-200">
               {isEdit ? 'Editar producto' : 'Nuevo producto'}
@@ -488,7 +586,7 @@ export function ProductFormModal({
               </div>
 
               {/* ---- Precio + campos según el modo ---- */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className={labelCls}>
                     {data.sellMode === 'unit'
@@ -504,13 +602,14 @@ export function ProductFormModal({
                   </label>
                   <input
                     type="number"
+                    inputMode="numeric"
                     value={data.price}
                     onChange={(e) =>
                       setData((prev) => ({ ...prev, price: e.target.value }))
                     }
-                    placeholder="0.00"
-                    min={0.01}
-                    step={0.01}
+                    placeholder="0"
+                    min={0}
+                    step={1}
                     disabled={loading}
                     className={`${inputBase} ${errors.price ? inputError : 'border-gold-300/20'}`}
                   />
@@ -548,17 +647,16 @@ export function ProductFormModal({
                       Kilos disponibles *
                       <InfoTip text="Cuántos kilos tenés en total para vender. Cuando alguien compra, se descuenta solo (ej: tenés 5 kg, venden 1,5 → quedan 3,5)." />
                     </label>
-                    <input
-                      type="number"
+                    <DecimalStepper
                       value={data.stock}
-                      onChange={(e) =>
-                        setData((prev) => ({ ...prev, stock: e.target.value }))
+                      onChange={(v) =>
+                        setData((prev) => ({ ...prev, stock: v }))
                       }
-                      placeholder="Ej: 6"
+                      step={0.5}
                       min={0}
-                      step={0.1}
+                      placeholder="Ej: 6"
                       disabled={loading}
-                      className={`${inputBase} ${errors.stock ? inputError : 'border-gold-300/20'}`}
+                      hasError={!!errors.stock}
                     />
                     {errors.stock && (
                       <p className="mt-1 text-sm text-red-400">{errors.stock}</p>
@@ -569,26 +667,22 @@ export function ProductFormModal({
 
               {/* ---- Granel: mínimo y paso ---- */}
               {data.sellMode === 'bulk' && (
-                <div className="grid grid-cols-2 gap-4 rounded-xl border border-gold-300/15 bg-dark-700/40 p-4">
+                <div className="grid grid-cols-1 gap-4 rounded-xl border border-gold-300/15 bg-dark-700/40 p-4 sm:grid-cols-2">
                   <div>
                     <label className={labelCls}>
                       Mínimo de compra (kg) *
                       <InfoTip text="Lo menos que alguien puede llevar. Ej: 1,5 kg. Así evitás pedidos de 100 gramos." />
                     </label>
-                    <input
-                      type="number"
+                    <DecimalStepper
                       value={data.minWeightKg}
-                      onChange={(e) =>
-                        setData((prev) => ({
-                          ...prev,
-                          minWeightKg: e.target.value,
-                        }))
+                      onChange={(v) =>
+                        setData((prev) => ({ ...prev, minWeightKg: v }))
                       }
-                      placeholder="Ej: 1.5"
+                      step={0.5}
                       min={0}
-                      step={0.1}
+                      placeholder="Ej: 1,5"
                       disabled={loading}
-                      className={`${inputBase} ${errors.minWeightKg ? inputError : 'border-gold-300/20'}`}
+                      hasError={!!errors.minWeightKg}
                     />
                     {errors.minWeightKg && (
                       <p className="mt-1 text-sm text-red-400">
@@ -601,20 +695,16 @@ export function ProductFormModal({
                       Sube de a (kg) *
                       <InfoTip text="De a cuánto sube el peso cuando el cliente toca el botón +. Ej: 0,5 kg → 1,5 / 2 / 2,5..." />
                     </label>
-                    <input
-                      type="number"
+                    <DecimalStepper
                       value={data.stepWeightKg}
-                      onChange={(e) =>
-                        setData((prev) => ({
-                          ...prev,
-                          stepWeightKg: e.target.value,
-                        }))
+                      onChange={(v) =>
+                        setData((prev) => ({ ...prev, stepWeightKg: v }))
                       }
-                      placeholder="Ej: 0.5"
+                      step={0.25}
                       min={0}
-                      step={0.1}
+                      placeholder="Ej: 0,5"
                       disabled={loading}
-                      className={`${inputBase} ${errors.stepWeightKg ? inputError : 'border-gold-300/20'}`}
+                      hasError={!!errors.stepWeightKg}
                     />
                     {errors.stepWeightKg && (
                       <p className="mt-1 text-sm text-red-400">
@@ -639,24 +729,19 @@ export function ProductFormModal({
                   </p>
                   <div className="space-y-2">
                     {data.pieces.map((p, i) => {
-                      const w = Number(p.weightKg) || 0;
+                      const w = toNum(p.weightKg) || 0;
                       const linePrice = w > 0 && priceNum > 0 ? priceNum * w : 0;
                       return (
                         <div key={i} className="flex items-center gap-2">
-                          <div className="relative flex-1">
-                            <input
-                              type="number"
+                          <div className="flex-1">
+                            <DecimalStepper
                               value={p.weightKg}
-                              onChange={(e) => updatePiece(i, e.target.value)}
-                              placeholder={`Pieza ${i + 1} — peso en kg (ej: 3.2)`}
+                              onChange={(v) => updatePiece(i, v)}
+                              step={0.1}
                               min={0}
-                              step={0.01}
+                              placeholder={`Pieza ${i + 1} — kg (ej: 3,2)`}
                               disabled={loading}
-                              className={`${inputBase} border-gold-300/20 pr-16`}
                             />
-                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/40">
-                              kg
-                            </span>
                           </div>
                           <span className="w-24 shrink-0 text-right text-[13px] font-semibold text-gold-200">
                             {linePrice > 0 ? fmtPrice(linePrice) : '—'}
@@ -871,28 +956,26 @@ export function ProductFormModal({
                 </label>
               </div>
 
-              {/* Activo (solo edición) */}
-              {isEdit && (
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="active"
-                    checked={data.active}
-                    onChange={(e) =>
-                      setData((prev) => ({ ...prev, active: e.target.checked }))
-                    }
-                    disabled={loading}
-                    className="size-5 rounded border-gold-300/30 bg-dark-700 text-gold-300 focus:ring-gold-300/50"
-                  />
-                  <label
-                    htmlFor="active"
-                    className="flex items-center font-medium text-gold-200"
-                  >
-                    Producto activo
-                    <InfoTip text="Si lo destildás, el producto deja de verse en el sitio (pero no se borra)." />
-                  </label>
-                </div>
-              )}
+              {/* Activo (visible en crear y editar) */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="active"
+                  checked={data.active}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, active: e.target.checked }))
+                  }
+                  disabled={loading}
+                  className="size-5 rounded border-gold-300/30 bg-dark-700 text-gold-300 focus:ring-gold-300/50"
+                />
+                <label
+                  htmlFor="active"
+                  className="flex items-center font-medium text-gold-200"
+                >
+                  Producto activo
+                  <InfoTip text="Si está tildado, el producto se ve en el sitio. Destildalo para cargarlo sin publicarlo todavía (o para ocultarlo)." />
+                </label>
+              </div>
 
               {/* Botones */}
               <div className="flex gap-3 pt-4">

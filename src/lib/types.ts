@@ -212,6 +212,7 @@ export interface CreateProductDto {
   videoUrl?: string;
   category: string;
   featured?: boolean;
+  active?: boolean;
 }
 
 export interface UpdateProductDto {

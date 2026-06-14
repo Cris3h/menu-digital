@@ -4,6 +4,7 @@ import './globals.css';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
 import { SettingsProvider } from '@/components/layout/SettingsProvider';
 import { AnalyticsTracker } from '@/components/layout/AnalyticsTracker';
+import { NoFieldTextDrag } from '@/components/layout/NoFieldTextDrag';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { SITE_LANDING_IMAGE_URL, SITE_NAME } from '@/lib/constants';
 
@@ -82,6 +83,7 @@ export default function RootLayout({
           <ConditionalLayout>{children}</ConditionalLayout>
         </SettingsProvider>
         <AnalyticsTracker />
+        <NoFieldTextDrag />
         <ToastContainer />
       </body>
     </html>

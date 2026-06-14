@@ -99,9 +99,14 @@ export function AdminSidebar() {
       </aside>
 
       {/* ---------- Topbar mobile ---------- */}
+      {/* En mobile NO usamos sticky: en Android (Samsung/Chrome) las barras
+          sticky dejaban "fantasmas" de repintado al scrollear. Scrollea normal. */}
       <div
-        className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 lg:hidden"
-        style={{ background: 'var(--bg-2)', boxShadow: 'inset 0 -1px 0 var(--line)' }}
+        className="relative z-50 flex items-center justify-between px-4 py-3 lg:hidden"
+        style={{
+          background: 'var(--bg-2)',
+          boxShadow: 'inset 0 -1px 0 var(--line)',
+        }}
       >
         <Link href="/admin/dashboard" className="flex items-center gap-2">
           <Logo className="scale-[0.7]" />
@@ -116,8 +121,11 @@ export function AdminSidebar() {
 
       {open && (
         <div
-          className="sticky top-[57px] z-40 flex flex-col gap-4 px-4 py-4 lg:hidden"
-          style={{ background: 'var(--bg-2)', boxShadow: 'inset 0 -1px 0 var(--line)' }}
+          className="relative z-40 flex flex-col gap-4 px-4 py-4 lg:hidden"
+          style={{
+            background: 'var(--bg-2)',
+            boxShadow: 'inset 0 -1px 0 var(--line)',
+          }}
         >
           <NavItems onNavigate={() => setOpen(false)} />
           <UserCard />

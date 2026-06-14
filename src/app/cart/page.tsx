@@ -171,7 +171,10 @@ function CartRow({
     );
 
   const weight = item.weightKg ?? 0;
+  const stepKg = item.stepKg ?? 0.5;
+  const minKg = item.minKg ?? stepKg;
   const atStock = item.stock != null && weight >= item.stock;
+  const atMinKg = weight <= minKg;
   const atQtyStock = item.stock != null && item.quantity >= item.stock;
 
   return (
@@ -194,17 +197,16 @@ function CartRow({
           <div className="c2-qty">
             <button
               onClick={() =>
-                weight > 0.5
-                  ? onDecWeight(key, +(weight - 0.5).toFixed(2))
-                  : onRemove(key)
+                onDecWeight(key, Math.max(minKg, +(weight - stepKg).toFixed(2)))
               }
+              disabled={atMinKg}
               aria-label="Menos peso"
             >
               <Icon.minus style={{ width: 18, height: 18, strokeWidth: 2.4 }} />
             </button>
             <span className="val tnum">{weight} kg</span>
             <button
-              onClick={() => onIncWeight(key, +(weight + 0.5).toFixed(2))}
+              onClick={() => onIncWeight(key, +(weight + stepKg).toFixed(2))}
               disabled={atStock}
               aria-label="Más peso"
             >

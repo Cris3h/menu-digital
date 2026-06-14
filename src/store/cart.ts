@@ -20,6 +20,10 @@ export interface CartItem {
   kind?: CartKind;
   /** fixed: peso por unidad. loose: kilos elegidos. */
   weightKg?: number;
+  /** loose: paso del selector de kilos (default 0.5). */
+  stepKg?: number;
+  /** loose: peso mínimo (no se puede bajar de acá). */
+  minKg?: number;
   /** Stock disponible del producto: el carrito no permite superarlo. */
   stock?: number;
   /** Si la línea es un combo, su id (para enviarlo al backend como comboId). */

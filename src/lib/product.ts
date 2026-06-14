@@ -86,6 +86,10 @@ export function buildCartItem(
     quantity: kind === 'loose' ? 1 : quantity,
     kind,
     weightKg: wk,
+    // Paso/mínimo solo para peso a elección (granel), así el carrito sube los
+    // kilos igual que el detalle del producto.
+    stepKg: kind === 'loose' ? looseStep(p) : undefined,
+    minKg: kind === 'loose' ? looseMin(p) : undefined,
     stock: p.stock,
   };
 }
