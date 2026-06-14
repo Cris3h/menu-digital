@@ -1,6 +1,6 @@
 'use client';
 
-import { cartLineTotal, type CartItem } from '@/store/cart';
+import { cartLineTotal, cartItemKey, type CartItem } from '@/store/cart';
 import type { DeliveryMethod } from '@/lib/types';
 import { fmtPrice } from '@/lib/utils';
 
@@ -31,7 +31,7 @@ export function OrderSummary({ items, total, deliveryMethod = 'delivery' }: Orde
       <div className="flex max-h-[320px] flex-col overflow-y-auto">
         {items.map((item) => (
           <div
-            key={item.productId}
+            key={cartItemKey(item)}
             className="flex items-center gap-3 py-[11px]"
             style={{ boxShadow: 'inset 0 -1px 0 var(--line-soft)' }}
           >

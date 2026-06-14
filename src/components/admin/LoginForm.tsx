@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useToast } from '@/hooks/useToast';
 import { validateLoginForm, type LoginFormErrors } from '@/lib/validations';
+import { Eye, EyeOff } from 'lucide-react';
 import { Icon } from '@/components/ui/Icons';
 
 export function LoginForm() {
@@ -13,6 +14,7 @@ export function LoginForm() {
   const toast = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
@@ -89,7 +91,7 @@ export function LoginForm() {
         >
           <Icon.lock />
           <input
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => handleChange('password', e.target.value)}
             onBlur={() => handleBlur('password')}
@@ -98,6 +100,20 @@ export function LoginForm() {
             autoComplete="current-password"
             minLength={6}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            disabled={loading}
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            className="ml-1 flex shrink-0 items-center justify-center text-tan-dim transition-colors hover:text-gold"
+          >
+            {showPassword ? (
+              <EyeOff style={{ width: 18, height: 18 }} />
+            ) : (
+              <Eye style={{ width: 18, height: 18 }} />
+            )}
+          </button>
         </div>
         {errors.password && (
           <span className="text-[12px]" style={{ color: '#d4796b' }}>

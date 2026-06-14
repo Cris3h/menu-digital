@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
+import { motion } from 'framer-motion';
 import { Loader2, Plus, Pencil, Trash2 } from 'lucide-react';
 import { adminApi } from '@/lib/adminApi';
 import type { Combo } from '@/lib/types';
 import { useToast } from '@/hooks/useToast';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { fmtPrice } from '@/lib/utils';
 import { AdminPageHeader, Panel } from '@/components/admin/AdminUI';
 import { Button } from '@/components/ui/Button';
@@ -155,6 +157,7 @@ function ComboFormModal({
   onSaved: () => void;
 }) {
   const toast = useToast();
+  const isDesktop = useIsDesktop();
   const isEdit = !!combo;
   const [name, setName] = useState('');
   const [serves, setServes] = useState('');
@@ -217,7 +220,16 @@ function ComboFormModal({
   return (
     <>
       <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden />
-      <div className="fixed left-1/2 top-1/2 z-[60] max-h-[90vh] w-[calc(100%-2rem)] max-w-[600px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gold-300/30 bg-dark-800 p-6 shadow-2xl">
+      <motion.div
+        initial={isDesktop ? { x: '100%' } : { opacity: 0, scale: 0.95 }}
+        animate={isDesktop ? { x: 0 } : { opacity: 1, scale: 1 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className={
+          isDesktop
+            ? 'fixed right-0 top-0 z-[60] h-full w-[50vw] min-w-[560px] overflow-y-auto border-l border-gold-300/30 bg-dark-800 p-6 shadow-2xl'
+            : 'fixed left-1/2 top-1/2 z-[60] max-h-[90vh] w-[calc(100%-2rem)] max-w-[600px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gold-300/30 bg-dark-800 p-6 shadow-2xl'
+        }
+      >
         <h2 className="text-2xl font-bold text-gold-200">
           {isEdit ? 'Editar combo' : 'Nuevo combo'}
         </h2>
@@ -293,7 +305,7 @@ function ComboFormModal({
             </Button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 }

@@ -52,7 +52,9 @@ export default function CheckoutPage() {
           items: items.map((i) =>
             i.comboId
               ? { comboId: i.comboId, quantity: i.quantity }
-              : { productId: i.productId, quantity: i.quantity, weightKg: i.weightKg }
+              : i.pieceId
+                ? { productId: i.productId, pieceId: i.pieceId, quantity: i.quantity }
+                : { productId: i.productId, quantity: i.quantity, weightKg: i.weightKg }
           ),
         });
 

@@ -1,5 +1,20 @@
-/** Cómo se vende el producto e interpreta `price`. */
+/** Cómo se vende el producto e interpreta `price`. (Legacy) */
 export type SellBy = 'unit' | 'weight';
+
+/**
+ * Modo de venta (modelo nuevo, más claro). Si está, manda sobre `sellBy`.
+ * - 'unit'   → por unidad. price = total por unidad, stock = unidades.
+ * - 'bulk'   → granel por peso. price = $/kg, stock = kg, min/step de compra.
+ * - 'pieces' → piezas individuales. price = $/kg, el cliente elige una pieza.
+ */
+export type SellMode = 'unit' | 'bulk' | 'pieces';
+
+/** Una pieza individual (modo 'pieces'): ej. un matambre de 3.2 kg. */
+export interface ProductPiece {
+  _id?: string;
+  weightKg: number;
+  available: boolean;
+}
 
 export interface Product {
   _id: string;
@@ -9,11 +24,15 @@ export interface Product {
   price: number;
   /** Por defecto 'unit' (compatibilidad con productos viejos). */
   sellBy?: SellBy;
-  /** Solo weight: peso fijo por unidad (costillar). Si no está, peso a elección. */
+  /** Modo de venta (nuevo). Si está, manda sobre sellBy. */
+  sellMode?: SellMode;
+  /** Solo 'pieces': lista de piezas individuales con su peso. */
+  pieces?: ProductPiece[];
+  /** Legacy weight: peso fijo por unidad (costillar). Si no está, peso a elección. */
   unitWeightKg?: number;
-  /** Solo weight a elección: peso mínimo del selector (default 0.5). */
+  /** Granel ('bulk') / legacy suelto: peso mínimo del selector (default 0.5). */
   minWeightKg?: number;
-  /** Solo weight a elección: paso del selector (default 0.5). */
+  /** Granel ('bulk') / legacy suelto: paso del selector (default 0.5). */
   stepWeightKg?: number;
   stock: number;
   imageUrl: string;
@@ -120,6 +139,8 @@ export interface CreateOrderPayload {
   items: {
     productId?: string;
     comboId?: string;
+    /** Pieza elegida (modo 'pieces'). */
+    pieceId?: string;
     quantity: number;
     weightKg?: number;
   }[];
@@ -181,6 +202,8 @@ export interface CreateProductDto {
   description?: string;
   price: number;
   sellBy?: SellBy;
+  sellMode?: SellMode;
+  pieces?: ProductPiece[];
   unitWeightKg?: number;
   minWeightKg?: number;
   stepWeightKg?: number;
@@ -189,6 +212,7 @@ export interface CreateProductDto {
   videoUrl?: string;
   category: string;
   featured?: boolean;
+  active?: boolean;
 }
 
 export interface UpdateProductDto {
@@ -196,6 +220,8 @@ export interface UpdateProductDto {
   description?: string;
   price?: number;
   sellBy?: SellBy;
+  sellMode?: SellMode;
+  pieces?: ProductPiece[];
   unitWeightKg?: number;
   minWeightKg?: number;
   stepWeightKg?: number;
