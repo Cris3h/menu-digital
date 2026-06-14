@@ -13,7 +13,12 @@ import { useSettings } from '@/components/layout/SettingsProvider';
 import { Icon } from '@/components/ui/Icons';
 import { Price } from '@/components/ui/Price';
 import { ProductCard } from '@/components/menu/ProductCard';
-import { buildCartItem, productDisplayPrice, productKind } from '@/lib/product';
+import {
+  buildCartItem,
+  productDisplayPrice,
+  productKind,
+  productMode,
+} from '@/lib/product';
 import { PageTransition } from '@/components/layout/PageTransition';
 
 // Servidas desde Cloudinary con optimización automática (formato + calidad + ancho).
@@ -40,6 +45,11 @@ export function HomeContent() {
   const featured = (data?.data ?? []).slice(0, 3);
 
   const handleAdd = (p: Product) => {
+    // Por pieza: hay que elegir cuál → va al detalle.
+    if (productMode(p) === 'pieces') {
+      router.push(`/producto/${p._id}`);
+      return;
+    }
     if (p.stock <= 0) return;
     addItem(buildCartItem(p));
     toast.success('Producto agregado al carrito');

@@ -1,5 +1,39 @@
-import type { Product } from './types';
+import type { Product, ProductPiece, SellMode } from './types';
 import type { CartItem, CartKind } from '@/store/cart';
+
+/**
+ * Modo de venta efectivo (modelo nuevo). Si el producto no tiene `sellMode`
+ * (productos viejos), se deriva de `sellBy` para no romper compatibilidad.
+ */
+export function productMode(p: Product): SellMode {
+  if (p.sellMode) return p.sellMode;
+  return (p.sellBy ?? 'unit') === 'weight' ? 'bulk' : 'unit';
+}
+
+/** Piezas disponibles de un producto por piezas. */
+export function availablePieces(p: Product): ProductPiece[] {
+  return (p.pieces ?? []).filter((pc) => pc.available);
+}
+
+/** Precio total de una pieza = peso × $/kg. */
+export function piecePrice(p: Product, piece: ProductPiece): number {
+  return Math.round(p.price * piece.weightKg);
+}
+
+/** CartItem desde una pieza elegida: línea de peso fijo (kind 'fixed') + pieceId. */
+export function buildPieceCartItem(p: Product, piece: ProductPiece): CartItem {
+  return {
+    productId: p._id,
+    name: p.name,
+    price: p.price, // $/kg
+    imageUrl: p.imageUrl || '',
+    quantity: 1,
+    kind: 'fixed',
+    weightKg: piece.weightKg,
+    pieceId: piece._id,
+    stock: 1,
+  };
+}
 
 /** Tipo de venta efectivo del producto para el carrito. */
 export function productKind(p: Product): CartKind {
@@ -52,5 +86,10 @@ export function buildCartItem(
     quantity: kind === 'loose' ? 1 : quantity,
     kind,
     weightKg: wk,
+    // Paso/mínimo solo para peso a elección (granel), así el carrito sube los
+    // kilos igual que el detalle del producto.
+    stepKg: kind === 'loose' ? looseStep(p) : undefined,
+    minKg: kind === 'loose' ? looseMin(p) : undefined,
+    stock: p.stock,
   };
 }

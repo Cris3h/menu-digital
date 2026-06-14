@@ -87,7 +87,13 @@ export default function DashboardPage() {
     () =>
       (orders as Order[])
         .filter((o) => o.status === 'pending' || o.status === 'paid')
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        // A prueba de NaN: si una fecha viene inválida, no rompe el orden (un
+        // comparador que devuelve NaN deja el array desordenado).
+        .sort(
+          (a, b) =>
+            (new Date(b.createdAt).getTime() || 0) -
+            (new Date(a.createdAt).getTime() || 0)
+        )
         .slice(0, 10),
     [orders]
   );

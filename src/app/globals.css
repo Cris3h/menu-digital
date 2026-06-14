@@ -1124,4 +1124,381 @@ body {
   scrollbar-width: none;
 }
 
+/* ============================================================
+   CARRITO v2 — página /cart (rediseño)
+   ============================================================ */
+
+/* head */
+.c2-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  gap: 16px;
+}
+.c2-title {
+  font-family: var(--font-anton);
+  text-transform: uppercase;
+  font-size: 46px;
+  line-height: 0.9;
+  color: var(--cream);
+  margin: 0;
+  white-space: nowrap;
+}
+.c2-sub {
+  color: var(--tan-dim);
+  font-size: 14px;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+/* vaciar */
+.c2-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 11px;
+  cursor: pointer;
+  font-family: var(--font-manrope);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--tan);
+  border: none;
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.c2-clear:hover {
+  color: #ec8473;
+  box-shadow: inset 0 0 0 1.5px rgba(226, 121, 107, 0.55);
+  background: rgba(226, 121, 107, 0.1);
+}
+
+/* grid */
+.c2-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 26px;
+  align-items: start;
+}
+.c2-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* row card */
+.c2-row {
+  display: grid;
+  grid-template-columns: 92px 1fr auto auto 44px;
+  align-items: center;
+  gap: 22px;
+  background: linear-gradient(180deg, var(--card-a), var(--card-b));
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow 0.16s ease, transform 0.23s ease, opacity 0.23s ease;
+}
+.c2-row:hover {
+  box-shadow: inset 0 0 0 1px var(--gold-deep), 0 10px 26px rgba(0, 0, 0, 0.32);
+}
+.c2-thumb {
+  width: 92px;
+  height: 92px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  background: var(--ink);
+}
+.c2-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.c2-info {
+  min-width: 0;
+}
+.c2-cat {
+  font-family: var(--font-manrope);
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 5px;
+}
+.c2-name {
+  font-family: var(--font-manrope);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--cream);
+  margin-bottom: 7px;
+}
+.c2-unit {
+  font-family: var(--font-manrope);
+  font-size: 13.5px;
+  color: var(--tan-dim);
+  font-weight: 600;
+}
+.c2-unit span {
+  opacity: 0.7;
+}
+
+/* qty stepper */
+.c2-qtywrap {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+}
+.c2-qtylabel {
+  font-family: var(--font-manrope);
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--tan-dim);
+  white-space: nowrap;
+}
+.c2-qty {
+  display: inline-flex;
+  align-items: center;
+  background: var(--ink);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+.c2-qty button {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  transition: background 0.13s ease;
+}
+.c2-qty button:hover:not(:disabled) {
+  background: rgba(216, 162, 62, 0.16);
+}
+.c2-qty button:disabled {
+  color: var(--tan-dim);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.c2-qty .val {
+  min-width: 56px;
+  text-align: center;
+  font-family: var(--font-manrope);
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--cream);
+  box-shadow: inset 1px 0 0 var(--line), inset -1px 0 0 var(--line);
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* line total */
+.c2-line {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  min-width: 104px;
+}
+.c2-linelabel {
+  font-family: var(--font-manrope);
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--tan-dim);
+}
+.c2-lineval {
+  font-family: var(--font-manrope);
+  font-weight: 800;
+  font-size: 21px;
+  color: var(--gold);
+}
+
+/* delete */
+.c2-del {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  color: var(--tan-dim);
+  border: none;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: all 0.14s ease;
+}
+.c2-del:hover {
+  color: #ec8473;
+  box-shadow: inset 0 0 0 1px rgba(226, 121, 107, 0.55);
+  background: rgba(226, 121, 107, 0.12);
+}
+
+/* summary */
+.c2-sum {
+  position: sticky;
+  top: 24px;
+  border-radius: 18px;
+  padding: 26px 26px 24px;
+  background: linear-gradient(180deg, var(--panel), var(--card-b));
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.c2-sumtitle {
+  font-family: var(--font-anton);
+  text-transform: uppercase;
+  font-size: 24px;
+  color: var(--cream);
+  margin: 0 0 18px;
+}
+.c2-sumrows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 18px;
+}
+.c2-sumrow {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-manrope);
+  font-size: 14.5px;
+  color: var(--tan);
+  font-weight: 500;
+}
+.c2-sumrow span:last-child {
+  font-weight: 700;
+  color: var(--cream);
+}
+.c2-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  margin-bottom: 18px;
+  box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line);
+}
+.c2-totalval {
+  font-family: var(--font-manrope);
+  font-weight: 800;
+  font-size: 30px;
+  color: var(--gold);
+}
+.c2-cta {
+  width: 100%;
+  height: 56px;
+  font-size: 14.5px;
+}
+.c2-note {
+  font-family: var(--font-manrope);
+  font-size: 11.5px;
+  color: var(--tan-dim);
+  text-align: center;
+  line-height: 1.5;
+  margin: 13px 0 14px;
+}
+.c2-keep {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gold);
+  font-family: var(--font-manrope);
+  font-weight: 700;
+  font-size: 13.5px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.c2-keep:hover {
+  color: var(--gold-lite);
+}
+
+@media (max-width: 980px) {
+  .c2-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .c2-title {
+    font-size: 34px;
+  }
+  .c2-grid {
+    grid-template-columns: 1fr;
+  }
+  .c2-sum {
+    position: static;
+  }
+  /* Mobile: foto a la izquierda (alta), y a la derecha 2 filas:
+     fila 1 = nombre/precio + eliminar; fila 2 = cantidad + subtotal. */
+  .c2-row {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "thumb info del"
+      "thumb qty  line";
+    align-items: center;
+    row-gap: 12px;
+    column-gap: 12px;
+    padding: 14px;
+  }
+  .c2-thumb {
+    grid-area: thumb;
+    width: 64px;
+    height: 64px;
+    align-self: start;
+  }
+  .c2-info {
+    grid-area: info;
+    min-width: 0;
+  }
+  .c2-name {
+    font-size: 15px;
+    margin-bottom: 3px;
+  }
+  .c2-del {
+    grid-area: del;
+    align-self: start;
+    justify-self: end;
+    width: 38px;
+    height: 38px;
+  }
+  .c2-qtywrap {
+    grid-area: qty;
+    align-items: flex-start;
+  }
+  .c2-qty button {
+    width: 38px;
+    height: 38px;
+  }
+  .c2-qty .val {
+    min-width: 40px;
+    font-size: 15px;
+  }
+  .c2-line {
+    grid-area: line;
+    min-width: 0;
+    align-items: flex-end;
+  }
+}
+
 } /* @layer components */

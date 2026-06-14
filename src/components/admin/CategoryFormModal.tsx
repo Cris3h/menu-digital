@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 import type { Category } from '@/lib/types';
 import { adminApi } from '@/lib/adminApi';
 import { useToast } from '@/hooks/useToast';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { Button } from '@/components/ui/Button';
 
 interface CategoryFormModalProps {
@@ -50,6 +51,7 @@ export function CategoryFormModal({
   onSuccess,
 }: CategoryFormModalProps) {
   const toast = useToast();
+  const isDesktop = useIsDesktop();
   const [data, setData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
@@ -122,11 +124,15 @@ export function CategoryFormModal({
             aria-hidden
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="fixed left-1/2 top-1/2 z-[60] max-h-[90vh] w-[calc(100%-2rem)] max-w-[500px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gold-300/30 bg-dark-800 p-6 shadow-2xl"
+            initial={isDesktop ? { x: '100%' } : { opacity: 0, scale: 0.95 }}
+            animate={isDesktop ? { x: 0 } : { opacity: 1, scale: 1 }}
+            exit={isDesktop ? { x: '100%' } : { opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className={
+              isDesktop
+                ? 'fixed right-0 top-0 z-[60] h-full w-[50vw] min-w-[520px] overflow-y-auto border-l border-gold-300/30 bg-dark-800 p-6 shadow-2xl'
+                : 'fixed left-1/2 top-1/2 z-[60] max-h-[90vh] w-[calc(100%-2rem)] max-w-[500px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gold-300/30 bg-dark-800 p-6 shadow-2xl'
+            }
           >
             <h2 className="text-2xl font-bold text-gold-200">
               {isEdit ? 'Editar categoría' : 'Nueva categoría'}
