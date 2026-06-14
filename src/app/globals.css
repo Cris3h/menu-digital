@@ -1448,32 +1448,56 @@ body {
   .c2-sum {
     position: static;
   }
+  /* Mobile: foto a la izquierda (alta), y a la derecha 2 filas:
+     fila 1 = nombre/precio + eliminar; fila 2 = cantidad + subtotal. */
   .c2-row {
-    grid-template-columns: 72px 1fr auto;
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
     grid-template-areas:
       "thumb info del"
-      "thumb qty line";
-    row-gap: 14px;
-    column-gap: 16px;
+      "thumb qty  line";
+    align-items: center;
+    row-gap: 12px;
+    column-gap: 12px;
+    padding: 14px;
   }
   .c2-thumb {
     grid-area: thumb;
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
+    align-self: start;
   }
   .c2-info {
     grid-area: info;
+    min-width: 0;
+  }
+  .c2-name {
+    font-size: 15px;
+    margin-bottom: 3px;
   }
   .c2-del {
     grid-area: del;
+    align-self: start;
     justify-self: end;
+    width: 38px;
+    height: 38px;
   }
   .c2-qtywrap {
     grid-area: qty;
     align-items: flex-start;
   }
+  .c2-qty button {
+    width: 38px;
+    height: 38px;
+  }
+  .c2-qty .val {
+    min-width: 40px;
+    font-size: 15px;
+  }
   .c2-line {
     grid-area: line;
+    min-width: 0;
+    align-items: flex-end;
   }
 }
 
