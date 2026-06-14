@@ -14,7 +14,12 @@ import { Price } from '@/components/ui/Price';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { ProductCardSkeleton } from '@/components/menu/ProductCardSkeleton';
 import { ScrollToTop } from '@/components/menu/ScrollToTop';
-import { buildCartItem, productDisplayPrice, productKind } from '@/lib/product';
+import {
+  buildCartItem,
+  productDisplayPrice,
+  productKind,
+  productMode,
+} from '@/lib/product';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -131,11 +136,16 @@ export function MenuContent() {
   const handleAddFromCard = useCallback(
     (e: React.MouseEvent, product: Product) => {
       e.stopPropagation();
+      // Por pieza: hay que elegir cuál → va al detalle a seleccionarla.
+      if (productMode(product) === 'pieces') {
+        router.push(`/producto/${product._id}`);
+        return;
+      }
       if (product.stock <= 0) return;
       handleAddToCart(product, 1);
       handleShowToast('Producto agregado al carrito');
     },
-    [handleAddToCart, handleShowToast]
+    [handleAddToCart, handleShowToast, router]
   );
 
   return (
@@ -274,7 +284,11 @@ export function MenuContent() {
                       <button
                         className="add-btn"
                         onClick={(e) => handleAddFromCard(e, product)}
-                        disabled={product.stock <= 0}
+                        disabled={
+                          product.stock <= 0 ||
+                          (productKind(product) !== 'loose' &&
+                            getCartQuantity(product._id) >= product.stock)
+                        }
                         aria-label="Agregar al carrito"
                       >
                         <Icon.plus />

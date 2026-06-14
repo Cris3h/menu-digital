@@ -25,6 +25,9 @@ export function ProductCard({
 }: ProductCardProps) {
   const outOfStock = product.stock <= 0;
   const kind = productKind(product);
+  // Por unidad/fijo no se puede superar el stock. (Peso a elección se topea en kg en el store.)
+  const atMax = !outOfStock && kind !== 'loose' && cartQuantity >= product.stock;
+  const blocked = outOfStock || atMax;
 
   return (
     <article className="pcard" onClick={onClick}>
@@ -58,10 +61,16 @@ export function ProductCard({
         <button
           className="add-btn bottom-right"
           onClick={onAddToCart}
-          disabled={outOfStock}
+          disabled={blocked}
           aria-label="Agregar al carrito"
-          title={outOfStock ? 'Sin stock' : 'Agregar al carrito'}
-          style={outOfStock ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+          title={
+            outOfStock
+              ? 'Sin stock'
+              : atMax
+                ? 'Alcanzaste el stock disponible'
+                : 'Agregar al carrito'
+          }
+          style={blocked ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
         >
           <Icon.plus />
         </button>

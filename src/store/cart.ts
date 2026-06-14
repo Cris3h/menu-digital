@@ -20,8 +20,26 @@ export interface CartItem {
   kind?: CartKind;
   /** fixed: peso por unidad. loose: kilos elegidos. */
   weightKg?: number;
+  /** Stock disponible del producto: el carrito no permite superarlo. */
+  stock?: number;
   /** Si la línea es un combo, su id (para enviarlo al backend como comboId). */
   comboId?: string;
+  /** Si la línea es una pieza elegida (modo 'pieces'), su id. */
+  pieceId?: string;
+}
+
+/**
+ * Identidad de una línea del carrito. Normalmente es el productId, pero para
+ * piezas individuales (modo 'pieces') es productId:pieceId, así dos piezas
+ * distintas del mismo producto son dos líneas separadas.
+ */
+export function cartItemKey(i: Pick<CartItem, 'productId' | 'pieceId'>): string {
+  return i.pieceId ? `${i.productId}:${i.pieceId}` : i.productId;
+}
+
+/** Limita un valor al stock disponible (si se conoce). */
+function capToStock(value: number, stock?: number): number {
+  return stock != null && stock >= 0 ? Math.min(value, stock) : value;
 }
 
 /** Subtotal de una línea según su tipo de venta. */
@@ -35,9 +53,10 @@ export function cartLineTotal(i: CartItem): number {
 interface CartStore {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  updateWeight: (productId: string, weightKg: number) => void;
+  /** key = cartItemKey(item) (productId o productId:pieceId). */
+  removeItem: (key: string) => void;
+  updateQuantity: (key: string, quantity: number) => void;
+  updateWeight: (key: string, weightKg: number) => void;
   clearCart: () => void;
   getTotal: () => number;
 }
@@ -49,39 +68,50 @@ export const useCartStore = create<CartStore>()(
 
       addItem: (item) =>
         set((state) => {
-          const exists = state.items.find((i) => i.productId === item.productId);
+          const key = cartItemKey(item);
+          const exists = state.items.find((i) => cartItemKey(i) === key);
+          const isLoose = (item.kind ?? 'unit') === 'loose';
           if (exists) {
             return {
               items: state.items.map((i) => {
-                if (i.productId !== item.productId) return i;
+                if (cartItemKey(i) !== key) return i;
+                // Stock fresco si vino, si no el guardado. Nunca se supera.
+                const stock = item.stock ?? i.stock;
                 // Peso a elección: se suman los kilos. Resto: se suma la cantidad.
-                if ((item.kind ?? 'unit') === 'loose') {
-                  return { ...i, ...item, weightKg: (i.weightKg ?? 0) + (item.weightKg ?? 0) };
+                if (isLoose) {
+                  const kg = (i.weightKg ?? 0) + (item.weightKg ?? 0);
+                  return { ...i, ...item, stock, weightKg: capToStock(kg, stock) };
                 }
-                return { ...i, ...item, quantity: i.quantity + item.quantity };
+                const qty = i.quantity + item.quantity;
+                return { ...i, ...item, stock, quantity: capToStock(qty, stock) };
               }),
             };
           }
-          return { items: [...state.items, item] };
+          const capped = isLoose
+            ? { ...item, weightKg: capToStock(item.weightKg ?? 0, item.stock) }
+            : { ...item, quantity: capToStock(item.quantity, item.stock) };
+          return { items: [...state.items, capped] };
         }),
 
-      removeItem: (productId) =>
+      removeItem: (key) =>
         set((state) => ({
-          items: state.items.filter((i) => i.productId !== productId),
+          items: state.items.filter((i) => cartItemKey(i) !== key),
         })),
 
-      updateQuantity: (productId, quantity) =>
+      updateQuantity: (key, quantity) =>
         set((state) => ({
           items: state.items.map((i) =>
-            i.productId === productId ? { ...i, quantity } : i
+            cartItemKey(i) === key
+              ? { ...i, quantity: Math.max(1, capToStock(quantity, i.stock)) }
+              : i
           ),
         })),
 
-      updateWeight: (productId, weightKg) =>
+      updateWeight: (key, weightKg) =>
         set((state) => ({
           items: state.items.map((i) =>
-            i.productId === productId
-              ? { ...i, weightKg: Math.max(0, weightKg) }
+            cartItemKey(i) === key
+              ? { ...i, weightKg: Math.max(0, capToStock(weightKg, i.stock)) }
               : i
           ),
         })),
