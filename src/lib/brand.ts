@@ -12,7 +12,7 @@ export interface BrandCategory {
 /** Accesos rápidos fijos de la home: 3 categorías (filtran el catálogo por
  *  nombre; si la categoría no existe aún, el catálogo queda vacío) + Combos. */
 export const BRAND_CATEGORIES: BrandCategory[] = [
-  { id: 'cortes', label: 'Cortes', icon: 'steak', href: '/menu?cat=Cortes' },
+  { id: 'carnes', label: 'Carnes', icon: 'steak', href: '/menu?cat=Carnes' },
   { id: 'milanesas', label: 'Milanesas', icon: 'mila', href: '/menu?cat=Milanesas' },
   { id: 'congelados', label: 'Congelados', icon: 'snow', href: '/menu?cat=Congelados' },
   { id: 'combos', label: 'Combos', icon: 'flame', href: '/combos' },

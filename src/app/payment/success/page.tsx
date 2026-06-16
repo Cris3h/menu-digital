@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { Icon } from '@/components/ui/Icons';
 import { getWhatsAppUrl } from '@/lib/utils';
-import { WHATSAPP_NUMBER, WHATSAPP_MESSAGE } from '@/lib/constants';
+import { WHATSAPP_NUMBER } from '@/lib/constants';
+import { useSettings } from '@/components/layout/SettingsProvider';
 import { PageTransition } from '@/components/layout/PageTransition';
 
 const TRACK: [string, string, 'done' | 'now' | 'todo'][] = [
@@ -17,12 +18,27 @@ const TRACK: [string, string, 'done' | 'now' | 'todo'][] = [
 
 export default function PaymentSuccessPage() {
   const clearCart = useCartStore((s) => s.clearCart);
-  const whatsappUrl = getWhatsAppUrl(WHATSAPP_NUMBER, WHATSAPP_MESSAGE);
+  const settings = useSettings();
+  // Nº de pedido que viaja en la URL de retorno (?external_reference=ORD-...).
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   useEffect(() => {
     // El carrito se limpia solo cuando el pago se confirmó exitosamente.
     clearCart();
+    const ref = new URLSearchParams(window.location.search).get(
+      'external_reference'
+    );
+    if (ref) setOrderNumber(ref);
   }, [clearCart]);
+
+  // Ya pagó: el mensaje es de SEGUIMIENTO (no el genérico de "quiero pedir").
+  const trackMessage = orderNumber
+    ? `Hola! 👋 Hice el pedido #${orderNumber} y quería consultar por el seguimiento. ¡Gracias!`
+    : 'Hola! 👋 Acabo de hacer un pedido y quería consultar por el seguimiento. ¡Gracias!';
+  const whatsappUrl = getWhatsAppUrl(
+    settings.whatsappNumber || WHATSAPP_NUMBER,
+    trackMessage
+  );
 
   return (
     <PageTransition>
