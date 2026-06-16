@@ -19,6 +19,7 @@ import {
   productDisplayPrice,
   productKind,
   productMode,
+  reachedStockMax,
 } from '@/lib/product';
 
 const ITEMS_PER_PAGE = 8;
@@ -34,26 +35,15 @@ export function MenuContent() {
   const [searchQuery, setSearchQuery] = useState(
     () => searchParams.get('search') ?? ''
   );
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    () => searchParams.get('category') ?? null
-  );
-  // Filtro por NOMBRE de categoría (tiles del inicio: /menu?cat=Cortes).
+  // Filtro elegido por el usuario en los pills. `undefined` = todavía no tocó
+  // nada (vale el ?cat= del inicio); `null` = "Todos"; string = una categoría.
+  const [userCategoryId, setUserCategoryId] = useState<
+    string | null | undefined
+  >(() => searchParams.get('category') ?? undefined);
+  // Filtro por NOMBRE de categoría (tiles del inicio: /menu?cat=Carnes).
   const catNameParam = searchParams.get('cat');
-  const [catNotFound, setCatNotFound] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (debouncedSearch) params.set('search', debouncedSearch);
-    if (selectedCategoryId) params.set('category', selectedCategoryId);
-    const qs = params.toString();
-    window.history.replaceState(null, '', qs ? `/menu?${qs}` : '/menu');
-  }, [debouncedSearch, selectedCategoryId]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategoryId]);
 
   const { data: categoriesData } = useSWR<PaginatedResponse<Category>>(
     'categories',
@@ -61,29 +51,56 @@ export function MenuContent() {
   );
   const categories = categoriesData?.data ?? [];
 
-  // Resolver ?cat=<nombre> a una categoría real (tiles del inicio).
-  // Si la categoría no existe, marcamos catNotFound → mostramos vacío
-  // (sin mandar un id inválido al backend, que daría un CastError 500).
-  useEffect(() => {
-    if (!catNameParam || !categoriesData) return;
-    const match = categories.find(
-      (c) => c.name.toLowerCase() === catNameParam.toLowerCase()
-    );
-    if (match) {
-      setSelectedCategoryId(match._id);
-      setCatNotFound(false);
+  // Resolución SINCRÓNICA del filtro durante el render (sin efectos que vayan un
+  // render atrasado, que causaban el flash intermitente de "todo el catálogo"):
+  //  - Si el usuario tocó un pill, manda su elección.
+  //  - Si viene ?cat=Nombre del inicio, lo resolvemos contra las categorías.
+  //  - Si las categorías aún no cargaron, esperamos (no pedimos productos).
+  let effectiveCategoryId: string | null = null;
+  let catResolving = false;
+  let catNotFound = false;
+  if (userCategoryId !== undefined) {
+    effectiveCategoryId = userCategoryId;
+  } else if (catNameParam) {
+    if (!categoriesData) {
+      catResolving = true;
     } else {
-      setCatNotFound(true);
+      const match = categories.find(
+        (c) => c.name.toLowerCase() === catNameParam.toLowerCase()
+      );
+      if (match) effectiveCategoryId = match._id;
+      else catNotFound = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catNameParam, categoriesData]);
+  }
 
-  // Mientras esperamos resolver el nombre de categoría no pedimos productos
-  // (evita un flash con todo el catálogo antes de aplicar el filtro).
-  const productsKey =
-    catNameParam && !categoriesData
-      ? null
-      : ['products', selectedCategoryId, currentPage, catNotFound];
+  // Sincroniza la URL (cosmético). OJO: Next 16 sincroniza replaceState con su
+  // router, así que si reescribiéramos la URL mientras el filtro viene del
+  // ?cat= del inicio (y el usuario no tocó pills), Next borraría el ?cat= y el
+  // filtro volvería a "Todos". Por eso, en ese caso NO tocamos la URL.
+  useEffect(() => {
+    if (catResolving) return;
+    if (userCategoryId === undefined && catNameParam) return;
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (effectiveCategoryId) params.set('category', effectiveCategoryId);
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `/menu?${qs}` : '/menu');
+  }, [
+    debouncedSearch,
+    effectiveCategoryId,
+    catResolving,
+    userCategoryId,
+    catNameParam,
+  ]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [effectiveCategoryId]);
+
+  // Mientras esperamos resolver el ?cat= no pedimos productos (sin flash).
+  const productsKey = catResolving
+    ? null
+    : ['products', effectiveCategoryId, currentPage, catNotFound];
 
   const { data: productsData, error: productsError } = useSWR<
     PaginatedResponse<Product>
@@ -93,7 +110,7 @@ export function MenuContent() {
       : api.getProducts({
           page: currentPage,
           limit: ITEMS_PER_PAGE,
-          categoryId: selectedCategoryId ?? undefined,
+          categoryId: effectiveCategoryId ?? undefined,
         })
   );
 
@@ -171,25 +188,19 @@ export function MenuContent() {
           </div>
           <div className="filter-tabs lg:ml-auto lg:gap-2.5">
             <button
-              className={cn('ftab', !selectedCategoryId && !catNotFound && 'active')}
-              onClick={() => {
-                setSelectedCategoryId(null);
-                setCatNotFound(false);
-              }}
-              style={pillStyle(!selectedCategoryId && !catNotFound)}
+              className={cn('ftab', !effectiveCategoryId && !catNotFound && 'active')}
+              onClick={() => setUserCategoryId(null)}
+              style={pillStyle(!effectiveCategoryId && !catNotFound)}
             >
               Todos
             </button>
             {categories.map((c) => {
-              const active = !catNotFound && selectedCategoryId === c._id;
+              const active = !catNotFound && effectiveCategoryId === c._id;
               return (
                 <button
                   key={c._id}
                   className={cn('ftab', active && 'active')}
-                  onClick={() => {
-                    setSelectedCategoryId(c._id);
-                    setCatNotFound(false);
-                  }}
+                  onClick={() => setUserCategoryId(c._id)}
                   style={pillStyle(active)}
                 >
                   {c.name}
@@ -221,12 +232,11 @@ export function MenuContent() {
             <p className="mt-2 text-tan-dim">
               Probá con otros filtros o limpiá la búsqueda.
             </p>
-            {(searchQuery || selectedCategoryId || catNotFound) && (
+            {(searchQuery || effectiveCategoryId || catNotFound) && (
               <button
                 onClick={() => {
                   setSearchQuery('');
-                  setSelectedCategoryId(null);
-                  setCatNotFound(false);
+                  setUserCategoryId(null);
                 }}
                 className="btn btn-gold mt-5 h-[44px] px-6 text-[14px]"
               >
@@ -251,6 +261,7 @@ export function MenuContent() {
                       onClick={() => handleCardClick(product)}
                       onAddToCart={(e) => handleAddFromCard(e, product)}
                       cartQuantity={getCartQuantity(product._id)}
+                      reachedMax={reachedStockMax(items, product)}
                     />
                   ))}
             </div>
@@ -281,18 +292,28 @@ export function MenuContent() {
                           style={{ fontSize: 15 }}
                         />
                       </div>
-                      <button
-                        className="add-btn"
-                        onClick={(e) => handleAddFromCard(e, product)}
-                        disabled={
-                          product.stock <= 0 ||
-                          (productKind(product) !== 'loose' &&
-                            getCartQuantity(product._id) >= product.stock)
-                        }
-                        aria-label="Agregar al carrito"
-                      >
-                        <Icon.plus />
-                      </button>
+                      {reachedStockMax(items, product) ? (
+                        <button
+                          className="add-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push('/cart');
+                          }}
+                          aria-label="Ver carrito"
+                          title="Ya agregaste todo el stock · Ver carrito"
+                        >
+                          <Icon.bag />
+                        </button>
+                      ) : (
+                        <button
+                          className="add-btn"
+                          onClick={(e) => handleAddFromCard(e, product)}
+                          disabled={product.stock <= 0}
+                          aria-label="Agregar al carrito"
+                        >
+                          <Icon.plus />
+                        </button>
+                      )}
                     </div>
                   ))}
             </div>

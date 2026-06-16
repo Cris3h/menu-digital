@@ -7,6 +7,8 @@ import type {
   LoginResponse,
   CreateOrderPayload,
   Combo,
+  ProcessPaymentPayload,
+  ProcessPaymentResponse,
 } from './types';
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -78,6 +80,14 @@ export const api = {
     return handleResponse<Order>(res);
   },
 
+  // Cancela una orden pendiente (libera el stock reservado al abandonar el pago).
+  cancelOrder: async (orderId: string) => {
+    const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
+      method: 'POST',
+    });
+    return handleResponse<{ cancelled: boolean }>(res);
+  },
+
   // Auth
   login: async (email: string, password: string) => {
     const res = await fetch(`${API_URL}/auth/login`, {
@@ -96,5 +106,15 @@ export const api = {
       body: JSON.stringify({ orderId }),
     });
     return handleResponse<{ preferenceId: string; initPoint: string }>(res);
+  },
+
+  // Pago transparente (Payment Brick): manda el token tokenizado por MP.
+  processPayment: async (payload: ProcessPaymentPayload) => {
+    const res = await fetch(`${API_URL}/payments/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<ProcessPaymentResponse>(res);
   },
 };

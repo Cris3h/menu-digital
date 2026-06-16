@@ -98,6 +98,30 @@ export interface UpdateOrderStatusDto {
   status: OrderStatus;
 }
 
+/** Payload del pago transparente (Payment Brick) hacia el backend. */
+export interface ProcessPaymentPayload {
+  orderId: string;
+  /** UUID único por intento (previene pagos duplicados). */
+  idempotencyKey: string;
+  token?: string;
+  paymentMethodId: string;
+  installments?: number;
+  issuerId?: string;
+  payer: {
+    email?: string;
+    identification?: { type?: string; number?: string };
+  };
+}
+
+/** Respuesta del backend al procesar el pago. */
+export interface ProcessPaymentResponse {
+  paymentId: string;
+  status: string;
+  statusDetail: string;
+  /** Cupón para pagos en efectivo (Pago Fácil / Rapipago). */
+  ticketUrl: string;
+}
+
 export interface Payment {
   _id: string;
   orderId: string;

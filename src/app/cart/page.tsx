@@ -158,6 +158,14 @@ function CartRow({
   const lineTotal = cartLineTotal(item);
   const key = cartItemKey(item);
 
+  // Descriptor para que cada línea quede clara (sobre todo cortes del mismo
+  // producto, que solo se diferencian por su peso). Siempre en kg.
+  const weightDesc = item.pieceId
+    ? `${item.weightKg} kg`
+    : kind === 'fixed'
+      ? `≈ ${item.weightKg} kg c/u`
+      : null;
+
   // Etiqueta de precio unitario según el tipo de venta.
   const unitLine =
     kind === 'unit' ? (
@@ -188,6 +196,11 @@ function CartRow({
 
       <div className="c2-info">
         <div className="c2-name">{item.name}</div>
+        {weightDesc && (
+          <div className="text-[12.5px] font-semibold text-gold-lite">
+            {weightDesc}
+          </div>
+        )}
         <div className="c2-unit">{unitLine}</div>
       </div>
 
