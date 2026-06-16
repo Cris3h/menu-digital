@@ -18,6 +18,7 @@ import {
   productDisplayPrice,
   productKind,
   productMode,
+  reachedStockMax,
 } from '@/lib/product';
 import { PageTransition } from '@/components/layout/PageTransition';
 
@@ -30,6 +31,9 @@ const HERO_MILA =
 export function HomeContent() {
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
+  const cartItems = useCartStore((s) => s.items);
+  const cartQtyOf = (id: string) =>
+    cartItems.find((i) => i.productId === id && !i.pieceId)?.quantity ?? 0;
   const toast = useToast();
   const settings = useSettings();
   const whatsappUrl = getWhatsAppUrl(
@@ -159,6 +163,8 @@ export function HomeContent() {
             <ProductCard
               key={p._id}
               product={p}
+              cartQuantity={cartQtyOf(p._id)}
+              reachedMax={reachedStockMax(cartItems, p)}
               onClick={() => router.push(`/producto/${p._id}`)}
               onAddToCart={(e) => {
                 e.stopPropagation();
@@ -191,14 +197,25 @@ export function HomeContent() {
                   style={{ fontSize: 18 }}
                 />
               </div>
-              <button
-                className="add-btn"
-                onClick={() => handleAdd(p)}
-                disabled={p.stock <= 0}
-                aria-label="Agregar al carrito"
-              >
-                <Icon.plus />
-              </button>
+              {reachedStockMax(cartItems, p) ? (
+                <button
+                  className="add-btn"
+                  onClick={() => router.push('/cart')}
+                  aria-label="Ver carrito"
+                  title="Ya agregaste todo el stock · Ver carrito"
+                >
+                  <Icon.bag />
+                </button>
+              ) : (
+                <button
+                  className="add-btn"
+                  onClick={() => handleAdd(p)}
+                  disabled={p.stock <= 0}
+                  aria-label="Agregar al carrito"
+                >
+                  <Icon.plus />
+                </button>
+              )}
             </div>
           ))}
         </div>

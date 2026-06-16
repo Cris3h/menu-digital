@@ -1,5 +1,10 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4001';
 
+/** Public Key de MercadoPago (para tokenizar la tarjeta en el navegador / Brick).
+ *  Debe ser de la MISMA cuenta/credenciales que el MP_ACCESS_TOKEN del back
+ *  (ambas TEST-... o ambas APP_USR-...). */
+export const MP_PUBLIC_KEY = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY ?? '';
+
 /** Imagen del preview al compartir (WhatsApp, redes, etc.): el emblema/logo
  *  de la marca. Forzamos f_jpg para que los scrapers sociales lo rendericen
  *  sin problemas, cuadrado 1200px. */

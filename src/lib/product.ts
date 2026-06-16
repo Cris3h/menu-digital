@@ -65,6 +65,22 @@ export function looseMin(p: Product): number {
   return p.minWeightKg && p.minWeightKg > 0 ? p.minWeightKg : looseStep(p);
 }
 
+/**
+ * ¿El carrito ya tiene TODO el stock disponible de este producto?
+ *  - unidad/fijo → se compara por unidades (quantity).
+ *  - granel (loose) → se compara por kilos acumulados (weightKg).
+ * Sirve para que el botón "+" pase a "Ver carrito" al llegar al tope.
+ */
+export function reachedStockMax(items: CartItem[], product: Product): boolean {
+  if (!product.stock || product.stock <= 0) return false;
+  const item = items.find((i) => i.productId === product._id && !i.pieceId);
+  if (!item) return false;
+  if (productKind(product) === 'loose') {
+    return (item.weightKg ?? 0) >= product.stock - 1e-6;
+  }
+  return (item.quantity ?? 0) >= product.stock;
+}
+
 /** Construye el CartItem desde un producto + cantidad/peso elegidos. */
 export function buildCartItem(
   p: Product,

@@ -101,6 +101,7 @@ export function CheckoutForm({
   const missingRequired =
     !data.customerName.trim() ||
     !data.customerPhone.trim() ||
+    !data.customerEmail?.trim() ||
     (deliveryMethod === 'delivery' && !data.customerAddress?.trim());
   const isDisabled = hasErrors || missingRequired || loading;
 
@@ -156,6 +157,8 @@ export function CheckoutForm({
           <DesignField
             label="Nombre completo *"
             icon="user"
+            name="name"
+            autoComplete="name"
             placeholder="Martina Gómez"
             value={data.customerName}
             onChange={(v) => handleChange('customerName', v)}
@@ -167,6 +170,8 @@ export function CheckoutForm({
             label="Teléfono *"
             icon="phone"
             type="tel"
+            name="tel"
+            autoComplete="tel"
             placeholder="236 555-1234"
             value={data.customerPhone}
             onChange={(v) => handleChange('customerPhone', v)}
@@ -176,9 +181,11 @@ export function CheckoutForm({
           />
           <div className="sm:col-span-2">
             <DesignField
-              label="Email"
+              label="Email *"
               icon="mail"
               type="email"
+              name="email"
+              autoComplete="email"
               placeholder="martina@email.com"
               value={data.customerEmail || ''}
               onChange={(v) => handleChange('customerEmail', v)}
@@ -195,6 +202,8 @@ export function CheckoutForm({
                 <DesignField
                   label="Dirección de entrega *"
                   icon="mapPin"
+                  name="street-address"
+                  autoComplete="street-address"
                   placeholder="Belgrano 842"
                   value={data.customerAddress || ''}
                   onChange={(v) => handleChange('customerAddress', v)}
@@ -204,6 +213,8 @@ export function CheckoutForm({
               </div>
               <DesignField
                 label="Código postal"
+                name="postal-code"
+                autoComplete="postal-code"
                 placeholder="6000"
                 value={data.customerZipCode || ''}
                 onChange={(v) => handleChange('customerZipCode', v)}
@@ -310,6 +321,8 @@ function DesignField({
   onBlur,
   error,
   disabled,
+  name,
+  autoComplete,
 }: {
   label: string;
   icon?: IconName;
@@ -320,6 +333,9 @@ function DesignField({
   onBlur?: () => void;
   error?: string;
   disabled?: boolean;
+  /** Para que Chrome/Google ofrezca autocompletar con los datos guardados. */
+  name?: string;
+  autoComplete?: string;
 }) {
   const I = icon ? Icon[icon] : null;
   return (
@@ -332,6 +348,8 @@ function DesignField({
         {I && <I />}
         <input
           type={type}
+          name={name}
+          autoComplete={autoComplete}
           value={value}
           placeholder={placeholder}
           disabled={disabled}

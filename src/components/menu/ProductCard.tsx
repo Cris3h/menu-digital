@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/ui/Icons';
 import { Price } from '@/components/ui/Price';
 import type { Product } from '@/lib/types';
@@ -11,6 +12,9 @@ interface ProductCardProps {
   onClick: () => void;
   onAddToCart: (e: React.MouseEvent) => void;
   cartQuantity?: number;
+  /** ¿Ya se agregó todo el stock? (contempla granel por kg). Si no se pasa, se
+   *  calcula por unidades con cartQuantity. */
+  reachedMax?: boolean;
 }
 
 /**
@@ -22,12 +26,16 @@ export function ProductCard({
   onClick,
   onAddToCart,
   cartQuantity = 0,
+  reachedMax,
 }: ProductCardProps) {
+  const router = useRouter();
   const outOfStock = product.stock <= 0;
   const kind = productKind(product);
-  // Por unidad/fijo no se puede superar el stock. (Peso a elección se topea en kg en el store.)
-  const atMax = !outOfStock && kind !== 'loose' && cartQuantity >= product.stock;
-  const blocked = outOfStock || atMax;
+  // Tope de stock: usamos reachedMax (contempla granel por kg) si viene; si no,
+  // caemos al cálculo por unidades (unidad/fijo).
+  const atMax =
+    !outOfStock &&
+    (reachedMax ?? (kind !== 'loose' && cartQuantity >= product.stock));
 
   return (
     <article className="pcard" onClick={onClick}>
@@ -58,22 +66,31 @@ export function ProductCard({
             ≈ {product.unitWeightKg} kg · {fmtPrice(product.price)}/kg
           </div>
         ) : null}
-        <button
-          className="add-btn bottom-right"
-          onClick={onAddToCart}
-          disabled={blocked}
-          aria-label="Agregar al carrito"
-          title={
-            outOfStock
-              ? 'Sin stock'
-              : atMax
-                ? 'Alcanzaste el stock disponible'
-                : 'Agregar al carrito'
-          }
-          style={blocked ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
-        >
-          <Icon.plus />
-        </button>
+        {atMax ? (
+          // Ya agregaste todo el stock disponible → el botón lleva al carrito.
+          <button
+            className="add-btn bottom-right"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push('/cart');
+            }}
+            aria-label="Ver carrito"
+            title="Ya agregaste todo el stock disponible · Ver carrito"
+          >
+            <Icon.bag />
+          </button>
+        ) : (
+          <button
+            className="add-btn bottom-right"
+            onClick={onAddToCart}
+            disabled={outOfStock}
+            aria-label="Agregar al carrito"
+            title={outOfStock ? 'Sin stock' : 'Agregar al carrito'}
+            style={outOfStock ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+          >
+            <Icon.plus />
+          </button>
+        )}
       </div>
     </article>
   );
